@@ -2,7 +2,9 @@
 
 namespace ReportWriter\Report\Builder;
 
+use Closure;
 use ReportWriter\Report\AbstractReport;
+use ReportWriter\Report\Builder\Exception\ReportWriterException;
 
 class ReportBuilder
 {
@@ -24,6 +26,7 @@ class ReportBuilder
 
     public function sum($field, string $as): self
     {
+        $this->checkGroupCount();
         $last = &$this->groups[count($this->groups) - 1];
         $last->sum($field, $as);
 
@@ -32,6 +35,7 @@ class ReportBuilder
 
     public function avg($field, string $as): self
     {
+        $this->checkGroupCount();
         $last = &$this->groups[count($this->groups) - 1];
         $last->avg($field, $as);
 
@@ -40,6 +44,7 @@ class ReportBuilder
 
     public function count($field, string $as): self
     {
+        $this->checkGroupCount();
         $last = &$this->groups[count($this->groups) - 1];
         $last->count($field, $as);
 
@@ -48,6 +53,7 @@ class ReportBuilder
 
     public function min($field, string $as): self
     {
+        $this->checkGroupCount();
         $last = &$this->groups[count($this->groups) - 1];
         $last->min($field, $as);
 
@@ -56,6 +62,7 @@ class ReportBuilder
 
     public function max($field, string $as): self
     {
+        $this->checkGroupCount();
         $last = &$this->groups[count($this->groups) - 1];
         $last->max($field, $as);
 
@@ -75,5 +82,14 @@ class ReportBuilder
         $this->report->setGroups($this->groups);
 
         return $this->report;
+    }
+
+    private function checkGroupCount(): void
+    {
+        if (empty($this->groups)) {
+            throw new ReportWriterException(
+                'You must call groupBy() before adding an aggregate function.'
+            );
+        }
     }
 }
