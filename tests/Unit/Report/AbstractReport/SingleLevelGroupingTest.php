@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace ReportWriter\Tests\Unit\Report;
+namespace ReportWrite\Tests\Unit\Report\AbstractReport;
 
 use Mockery\Adapter\Phpunit\MockeryPHPUnitIntegration;
 use PHPUnit\Framework\TestCase;
-use ReportWriter\Report\AbstractReport;
 use ReportWriter\Report\Builder\GroupBuilder;
 use ReportWriter\Report\Builder\ReportBuilder;
 use ReportWriter\Report\Data\DataProviderInterface;
+use ReportWriter\Tests\Unit\Report\AbstractTestReport;
 
-class AbstractReportTest extends TestCase
+class SingleLevelGroupingTest extends TestCase
 {
     use MockeryPHPUnitIntegration;
 
@@ -30,67 +30,21 @@ class AbstractReportTest extends TestCase
             ->once()
             ->andReturn($iterator);
 
-        // --------------------------------------------------------------------
         // Create a GroupBuilder that groups by 'category'
-        // --------------------------------------------------------------------
         $groupBuilder = (new GroupBuilder('category'))
             ->sum(
                 'sumAmount',
                 'amount'
             );
 
-        // --------------------------------------------------------------------
-        // Anonymous class to spy on renderBand calls
-        // --------------------------------------------------------------------
-        $report = new class extends AbstractReport {
-            private array $renderedBands = [];
+        $report = new AbstractTestReport();
 
-            public function getRenderedBands(): array
-            {
-                return $this->renderedBands;
-            }
-
-            protected function renderBand(string $type, ?int $level = null, $context = null): string
-            {
-                $name = $level !== null ? $type . '_' . $level : $type;
-                if (str_ends_with($name, 'groupFooter_0')) {
-                    echo "Footer $name:\n";
-                    if (is_array($context)) {
-                        echo "  All context keys: " . implode(', ', array_keys($context)) . "\n";
-                        if (isset($context['sumAmount'])) {
-                            echo "  sumAmount = " . $context['sumAmount'] . "\n";
-                        } else {
-                            echo "  sumAmount = MISSING\n";
-                        }
-                        echo "  recordCount = " . ($context['recordCount'] ?? 'N/A') . "\n";
-                        if (!empty($context['firstRecord'])) {
-                            echo "  firstRecord category = " . $context['firstRecord']['category'] . "\n";
-                        }
-                    }
-                }
-                $this->renderedBands[] = [
-                    'name' => $name,
-                    'context' => $context,
-                ];
-                return '';
-            }
-        };
-
-        // --------------------------------------------------------------------
-        // Configure the report
-        // --------------------------------------------------------------------
         $report
             ->setDataProvider($dataProvider)
             ->setGroups([$groupBuilder]);
 
-        // --------------------------------------------------------------------
-        // Execute
-        // --------------------------------------------------------------------
         $report->render();
 
-        // --------------------------------------------------------------------
-        // Get results and debug output (keep this — it's very helpful)
-        // --------------------------------------------------------------------
         $rendered = $report->getRenderedBands();
 
         echo "\n--- FULL RENDERED BANDS DEBUG ---\n";
@@ -109,10 +63,6 @@ class AbstractReportTest extends TestCase
         }
         echo "--- END DEBUG ---\n\n";
 
-
-        // --------------------------------------------------------------------
-        // Assertions — corrected for actual behavior
-        // --------------------------------------------------------------------
         $bandNames = array_map(fn($call) => $call['name'], $rendered);
 
         // Band order — this should still pass
@@ -156,22 +106,7 @@ class AbstractReportTest extends TestCase
         $dataProvider->shouldReceive('getRecords')->once()->andReturn($iterator);
 
         // ── Use the actual ReportBuilder fluent API ──
-        $report = new class extends AbstractReport {
-            private array $renderedBands = [];
-
-            public function getRenderedBands(): array { return $this->renderedBands; }
-
-            protected function renderBand(string $type, ?int $level = null, $context = null): string
-            {
-                $name = $level !== null ? $type . '_' . $level : $type;
-                $this->renderedBands[] = [
-                    'name' => $name,
-                    'context' => $context,
-                ];
-                return '';
-            }
-        };
-
+        $report = new AbstractTestReport();
         $builder = new ReportBuilder($report);
 
         $builder
@@ -215,28 +150,7 @@ class AbstractReportTest extends TestCase
             ->once()
             ->andReturn($iterator);
 
-        // --------------------------------------------------------------------
-        // Build the group + all aggregates using the fluent builder
-        // --------------------------------------------------------------------
-        $report = new class extends AbstractReport {
-            private array $renderedBands = [];
-
-            public function getRenderedBands(): array
-            {
-                return $this->renderedBands;
-            }
-
-            protected function renderBand(string $type, ?int $level = null, $context = null): string
-            {
-                $name = $level !== null ? $type . '_' . $level : $type;
-                $this->renderedBands[] = [
-                    'name'    => $name,
-                    'context' => $context,
-                ];
-
-                return '';
-            }
-        };
+        $report = new AbstractTestReport();
 
         $report
             ->setDataProvider($dataProvider)
