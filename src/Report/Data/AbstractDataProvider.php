@@ -18,5 +18,5 @@ abstract class AbstractDataProvider implements DataProviderInterface
         return $this->parameters[$name] ?? $default;
     }
 
-    abstract public function getData(): \Traversable;
+    abstract public function getRecords(): \Iterator;
 }

@@ -2,6 +2,7 @@
 
 namespace ReportWriter\Report\Data;
 
+use Iterator;
 use Traversable;
 
 class ArrayDataProvider extends AbstractDataProvider
@@ -55,9 +56,9 @@ class ArrayDataProvider extends AbstractDataProvider
     }
 
     /**
-     * @return Traversable
+     * @return Iterator
      */
-    public function getRecords(): Traversable
+    public function getRecords(): Iterator
     {
         // If it's already a Traversable (Generator, Iterator, etc.), yield from it
         if ($this->data instanceof Traversable) {

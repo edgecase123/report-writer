@@ -62,13 +62,19 @@ class Aggregate
      */
     public function getValue(): float
     {
-        return match ($this->type) {
-            self::TYPE_SUM   => $this->value,
-            self::TYPE_AVG   => $this->count > 0 ? $this->value / $this->count : 0.0,
-            self::TYPE_COUNT => $this->count,
-            self::TYPE_MIN   => $this->min ?? 0.0,
-            self::TYPE_MAX   => $this->max ?? 0.0,
-            default          => throw new \LogicException("Unsupported aggregate type in getValue: {$this->type}"),
-        };
+        switch ($this->type) {
+            case self::TYPE_SUM:
+                return $this->value;
+            case self::TYPE_AVG:
+                return $this->count > 0 ? $this->value / $this->count : 0.0;
+            case self::TYPE_COUNT:
+                return (float)$this->count;
+            case self::TYPE_MIN:
+                return $this->min ?? 0.0;
+            case self::TYPE_MAX:
+                return $this->max ?? 0.0;
+            default:
+                throw new \LogicException("Unsupported aggregate type in getValue: {$this->type}");
+        }
     }
 }

@@ -5,12 +5,12 @@ namespace ReportWriter\Report\Data;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\Query;
 use Doctrine\ORM\QueryBuilder;
+use Iterator;
 
 /**
  * Doctrine-specific data provider that streams results using Doctrine's iterable mode.
  *
- * Advantages:
- * - Very low memory usage (does not hydrate the full result set at once)
+ * - Low memory usage (does not hydrate the full result set at once)
  * - Works with any entity or custom DQL/QueryBuilder
  * - Supports parameters (filters) fluently
  */
@@ -79,9 +79,9 @@ class DoctrineDataProvider extends AbstractDataProvider
      *
      * Returns a Doctrine iterable result that yields rows one by one.
      */
-    public function getRecords(): \Traversable
+    public function getRecords(): Iterator
     {
-        if ($this->data instanceof \Generator || $this->data instanceof \Iterator) {
+        if ($this->data instanceof \Traversable) {
             yield from $this->data;
             return;
         }

@@ -2,6 +2,7 @@
 
 namespace ReportWriter\Report;
 
+use Iterator;
 use ReportWriter\Report\Band\BandInterface;
 use ReportWriter\Report\Builder\GroupBuilder;
 use ReportWriter\Report\Data\DataProviderInterface;
@@ -94,20 +95,23 @@ abstract class AbstractReport implements ReportInterface
             // 3. Update group stack to current
             $this->groupStack = $currentGroupKeys;
 
-            // 4. Accumulate current record into ALL active groups (old ones already closed, new ones just opened)
+            // Accumulate the current record into ALL active groups (old ones already
+            // closed, new ones just opened)
             foreach ($this->groupStates as $fullKey => &$state) {
                 foreach ($state['aggregates'] as $agg) {
                     $agg->accumulate($current);
                 }
+
                 $state['records'][] = $current;
                 $state['lastRecord'] = $current;
-                // firstRecord already set above for new groups; for ongoing groups it was set earlier
+                // Note that firstRecord already set above for new groups;
+                // for ongoing groups it was set earlier
             }
 
-            // 5. Render detail band
+            // Render detail band
             $output .= $this->renderBand('detail', null, $current);
 
-            // 6. Prepare for next iteration
+            // Prepare for the next iteration
             $previousGroupKeys = $currentGroupKeys;
 
             $current = $iterator->valid() ? $iterator->current() : null;

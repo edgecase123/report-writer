@@ -15,18 +15,15 @@ class AbstractReportTest extends TestCase
 {
     use MockeryPHPUnitIntegration;
 
+    const SAMPLE_DATA = [
+        ['id' => 1, 'category' => 'A', 'amount' => 100],
+        ['id' => 2, 'category' => 'A', 'amount' => 200],
+        ['id' => 3, 'category' => 'B', 'amount' => 300],
+    ];
+
     public function test_renders_single_level_grouping_with_correct_band_order_and_context(): void
     {
-        // --------------------------------------------------------------------
-        // 1. Prepare mock data provider with 3 records
-        // --------------------------------------------------------------------
-        $records = [
-            ['id' => 1, 'category' => 'A', 'amount' => 100],
-            ['id' => 2, 'category' => 'A', 'amount' => 200],
-            ['id' => 3, 'category' => 'B', 'amount' => 300],
-        ];
-
-        $iterator = new \ArrayIterator($records);
+        $iterator = new \ArrayIterator(self::SAMPLE_DATA);
 
         $dataProvider = \Mockery::mock(DataProviderInterface::class);
         $dataProvider->shouldReceive('getRecords')
@@ -34,16 +31,16 @@ class AbstractReportTest extends TestCase
             ->andReturn($iterator);
 
         // --------------------------------------------------------------------
-        // 2. Create a GroupBuilder that groups by 'category'
+        // Create a GroupBuilder that groups by 'category'
         // --------------------------------------------------------------------
         $groupBuilder = (new GroupBuilder('category'))
             ->sum(
-                'sumAmount',           // ← $as: the name you want in the template
-                'amount'               // ← $field: the actual field in the record
+                'sumAmount',
+                'amount'
             );
 
         // --------------------------------------------------------------------
-        // 3. Anonymous class to spy on renderBand calls
+        // Anonymous class to spy on renderBand calls
         // --------------------------------------------------------------------
         $report = new class extends AbstractReport {
             private array $renderedBands = [];
@@ -80,19 +77,19 @@ class AbstractReportTest extends TestCase
         };
 
         // --------------------------------------------------------------------
-        // 4. Configure the report
+        // Configure the report
         // --------------------------------------------------------------------
         $report
             ->setDataProvider($dataProvider)
             ->setGroups([$groupBuilder]);
 
         // --------------------------------------------------------------------
-        // 5. Execute
+        // Execute
         // --------------------------------------------------------------------
         $report->render();
 
         // --------------------------------------------------------------------
-        // 6. Get results and debug output (keep this — it's very helpful)
+        // Get results and debug output (keep this — it's very helpful)
         // --------------------------------------------------------------------
         $rendered = $report->getRenderedBands();
 
@@ -114,7 +111,7 @@ class AbstractReportTest extends TestCase
 
 
         // --------------------------------------------------------------------
-        // 7. Assertions — corrected for actual behavior
+        // Assertions — corrected for actual behavior
         // --------------------------------------------------------------------
         $bandNames = array_map(fn($call) => $call['name'], $rendered);
 
@@ -136,7 +133,7 @@ class AbstractReportTest extends TestCase
         $this->assertEquals('A', $rendered[1]['context']['firstRecord']['category']);
         $this->assertEquals(0, $rendered[1]['context']['recordCount']);
 
-        // Group A footer (index 4) — now correct after fix
+        // Group A footer (index 4)
         $this->assertEquals('A', $rendered[4]['context']['firstRecord']['category']);
         $this->assertEquals('A', $rendered[4]['context']['lastRecord']['category']);
         $this->assertEquals(2, $rendered[4]['context']['recordCount']);
@@ -153,13 +150,7 @@ class AbstractReportTest extends TestCase
 
     public function test_render_includes_sum_aggregate_in_group_footer(): void
     {
-        $records = [
-            ['id' => 1, 'category' => 'A', 'amount' => 100],
-            ['id' => 2, 'category' => 'A', 'amount' => 200],
-            ['id' => 3, 'category' => 'B', 'amount' => 300],
-        ];
-
-        $iterator = new \ArrayIterator($records);
+        $iterator = new \ArrayIterator(self::SAMPLE_DATA);
 
         $dataProvider = \Mockery::mock(DataProviderInterface::class);
         $dataProvider->shouldReceive('getRecords')->once()->andReturn($iterator);
@@ -185,17 +176,15 @@ class AbstractReportTest extends TestCase
 
         $builder
             ->groupBy('category')
-            ->sum('amount', 'sumAmount');   // field first, alias second — as in your ReportBuilder
+            ->sum('amount', 'sumAmount');
 
         $configuredReport = $builder->build();
-
         $configuredReport->setDataProvider($dataProvider);
-
         $configuredReport->render();
 
-        $rendered = $report->getRenderedBands();   // ← using the same instance
+        $rendered = $report->getRenderedBands();
 
-        // Find group footers (assuming same indices as before)
+        // Find group footers (assuming the same indices as before)
         $groupAFooter = $rendered[4]['context'] ?? [];
         $groupBFooter = $rendered[7]['context'] ?? [];
 
