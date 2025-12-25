@@ -194,4 +194,106 @@ class AbstractReportTest extends TestCase
         $this->assertEquals(300.0, $groupAFooter['sumAmount'], "Group A sum incorrect");
         $this->assertEquals(300.0, $groupBFooter['sumAmount'], "Group B sum incorrect");
     }
+
+    public function test_all_aggregate_types_are_calculated_correctly_in_group_footers(): void
+    {
+        // --------------------------------------------------------------------
+        // Prepare data – 5 records in two categories with varying amounts
+        // --------------------------------------------------------------------
+        $records = [
+            ['id' => 1, 'category' => 'Electronics', 'amount' => 100, 'quantity' => 2],
+            ['id' => 2, 'category' => 'Electronics', 'amount' => 200, 'quantity' => 1],
+            ['id' => 3, 'category' => 'Electronics', 'amount' => 300, 'quantity' => 5],
+            ['id' => 4, 'category' => 'Books',        'amount' => 50,  'quantity' => 10],
+            ['id' => 5, 'category' => 'Books',        'amount' => 30,  'quantity' => 8],
+        ];
+
+        $iterator = new \ArrayIterator($records);
+        $dataProvider = \Mockery::mock(DataProviderInterface::class);
+
+        $dataProvider->shouldReceive('getRecords')
+            ->once()
+            ->andReturn($iterator);
+
+        // --------------------------------------------------------------------
+        // Build the group + all aggregates using the fluent builder
+        // --------------------------------------------------------------------
+        $report = new class extends AbstractReport {
+            private array $renderedBands = [];
+
+            public function getRenderedBands(): array
+            {
+                return $this->renderedBands;
+            }
+
+            protected function renderBand(string $type, ?int $level = null, $context = null): string
+            {
+                $name = $level !== null ? $type . '_' . $level : $type;
+                $this->renderedBands[] = [
+                    'name'    => $name,
+                    'context' => $context,
+                ];
+
+                return '';
+            }
+        };
+
+        $report
+            ->setDataProvider($dataProvider)
+            ->setGroups([
+                (new \ReportWriter\Report\Builder\GroupBuilder('category'))
+                    ->sum('amount', 'totalAmount')
+                    ->avg('amount', 'avgAmount')
+                    ->count('amount', 'itemCount')    // counting non-null amounts = number of records
+                    ->min('amount', 'minAmount')
+                    ->max('amount', 'maxAmount')
+                    // We also count a different field to prove field choice matters
+                    ->count('quantity', 'quantityCount')
+            ]);
+
+        $report->render();
+
+        // Extract band for assertions
+        $bands = $report->getRenderedBands();
+
+        echo "\n--- GROUP FOOTER DEBUG ---\n";
+        foreach ($bands as $i => $band) {
+            if ($band['name'] === 'groupFooter_0') {
+                $ctx = $band['context'];
+                $cat = $ctx['firstRecord']['category'] ?? 'UNKNOWN';
+                $total = $ctx['totalAmount'] ?? 'N/A';
+                echo "Footer $i: category = $cat, totalAmount = $total\n";
+            }
+        }
+        echo "--- END ---\n\n";
+
+        // Collect all group footers in order
+        $groupFooters = [];
+        foreach ($bands as $band) {
+            if ($band['name'] === 'groupFooter_0') {
+                $groupFooters[] = $band['context'];
+            }
+        }
+
+        $this->assertCount(2, $groupFooters, 'Expected exactly two group footers');
+
+        $electronicsFooter = $groupFooters[0];
+        $booksFooter      = $groupFooters[1];
+
+        $this->assertEquals('Electronics', $electronicsFooter['firstRecord']['category']);
+        $this->assertEquals(600.0, $electronicsFooter['totalAmount']);
+
+        $this->assertEquals('Books', $booksFooter['firstRecord']['category']);
+        $this->assertEquals(80.0, $booksFooter['totalAmount']);
+
+        $this->assertEquals(200.0, $electronicsFooter['avgAmount']);
+        $this->assertEquals(3, $electronicsFooter['itemCount']);
+        $this->assertEquals(100.0, $electronicsFooter['minAmount']);
+        $this->assertEquals(300.0, $electronicsFooter['maxAmount']);
+
+        $this->assertEquals(40.0, $booksFooter['avgAmount']);
+        $this->assertEquals(2, $booksFooter['itemCount']);
+        $this->assertEquals(30.0, $booksFooter['minAmount']);
+        $this->assertEquals(50.0, $booksFooter['maxAmount']);
+    }
 }
