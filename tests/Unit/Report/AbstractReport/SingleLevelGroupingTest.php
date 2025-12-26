@@ -44,6 +44,7 @@ class SingleLevelGroupingTest extends TestCase
             ->setGroups([$groupBuilder]);
 
         $report->render();
+
         $rendered = $report->getRenderedBands();
         $bandNames = array_map(fn($call) => $call['name'], $rendered);
 

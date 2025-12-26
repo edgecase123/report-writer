@@ -2,16 +2,18 @@
 
 namespace ReportWriter\Report;
 
-use Iterator;
 use ReportWriter\Report\Band\BandInterface;
 use ReportWriter\Report\Builder\GroupBuilder;
 use ReportWriter\Report\Data\DataProviderInterface;
+use ReportWriter\Report\Renderer\RendererInterface;
 
 /**
  * Abstract Report class. Defines common helper methods and state.
  */
 abstract class AbstractReport implements ReportInterface
 {
+    protected ?RendererInterface $renderer = null;
+
     protected DataProviderInterface $dataProvider;
 
     /** @var BandInterface[] */
@@ -25,6 +27,18 @@ abstract class AbstractReport implements ReportInterface
 
     /** @var array $groupStates */
     private array $groupStates = [];
+
+    public function setRenderer(RendererInterface $renderer): self
+    {
+        $this->renderer = $renderer;
+
+        return $this;
+    }
+
+    public function getRenderer(): ?RendererInterface
+    {
+        return $this->renderer;
+    }
 
     public function setDataProvider(DataProviderInterface $dataProvider): self
     {
@@ -230,6 +244,11 @@ abstract class AbstractReport implements ReportInterface
 
     protected function renderBand(string $type, ?int $level = null, $context = null): string
     {
+        if ($this->renderer !== null) {
+            return $this->renderer->renderBand($type, $level, $context);
+        }
+
+        // If not Renderer used, then output debug info
         $name = $level !== null ? $type . '_' . $level : $type;
         return "<!-- $name band rendered with context: " . json_encode($context) . " -->\n";
     }
