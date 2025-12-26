@@ -2,11 +2,11 @@
 
 namespace ReportWriter\Report\Renderer;
 
+use ReportWriter\Report\AbstractReport;
+
 class HtmlTableRenderer implements RendererInterface
 {
     private string $output = '';
-
-    private int $columnCount = 0;
 
     private array $columnKeys = [];
 
@@ -15,6 +15,21 @@ class HtmlTableRenderer implements RendererInterface
     private bool $theadRendered = false;
 
     private bool $tbodyOpened = false;
+
+    private int $columnCount = 0;
+
+    private array $columnOrder = [];
+
+    private ?AbstractReport $report = null;
+
+    private array $columnLabels = []; // optional, if you use it
+
+    public function setReport(AbstractReport $report): self
+    {
+        $this->report = $report;
+
+        return $this;
+    }
 
     public function renderBand(string $type, ?int $level, $context): string
     {
@@ -93,18 +108,32 @@ class HtmlTableRenderer implements RendererInterface
 
         // Render <thead> only once (level 0)
         if ($level === 0 && !$this->theadRendered) {
-            $sampleRecord = $context['firstRecord'] ?? null;
-            if ($sampleRecord) {
-                $this->columnKeys = array_keys($sampleRecord);
-                $this->columnKeys = array_filter($this->columnKeys, fn($k) => $k !== 'id');
-                $this->columnCount = count($this->columnKeys);
+            if ($this->report && $this->report->hasConfiguredColumns()) {
+                $this->columnOrder = $this->report->getColumnOrder();
+                $this->columnCount = count($this->columnOrder);
 
                 $this->output .= "<thead>\n  <tr>\n";
-                foreach ($this->columnKeys as $key) {
-                    $this->output .= "    <th>" . htmlspecialchars(ucfirst($key)) . "</th>\n";
+                foreach ($this->columnOrder as $field) {
+                    $label = $this->report->getColumnLabel($field);
+                    $this->output .= "    <th>" . htmlspecialchars($label) . "</th>\n";
                 }
                 $this->output .= "  </tr>\n</thead>\n";
+            } else {
+                // Fallback: auto-detect from first record
+                $sampleRecord = $context['firstRecord'] ?? null;
+                if ($sampleRecord) {
+                    $this->columnKeys = array_keys($sampleRecord);
+                    $this->columnKeys = array_filter($this->columnKeys, fn($k) => $k !== 'id');
+                    $this->columnCount = count($this->columnKeys);
+
+                    $this->output .= "<thead>\n  <tr>\n";
+                    foreach ($this->columnKeys as $key) {
+                        $this->output .= "    <th>" . htmlspecialchars(ucfirst($key)) . "</th>\n";
+                    }
+                    $this->output .= "  </tr>\n</thead>\n";
+                }
             }
+
             $this->theadRendered = true;
         }
 
@@ -123,19 +152,30 @@ class HtmlTableRenderer implements RendererInterface
     private function renderDetail(array $context): void
     {
         $this->openTableIfNeeded();
+
         if (!$this->tbodyOpened) {
             $this->output .= "<tbody>\n";
             $this->tbodyOpened = true;
         }
 
-        $record = $context; // detail gets single record
+        $record = $context;
 
-        $this->output .= "<tr>\n";
-        foreach ($record as $key => $value) {
-            if ($key === 'id') continue;
-            $this->output .= "<td>" . htmlspecialchars($value) . "</td>\n";
+        $this->output .= "  <tr>\n";
+
+        if ($this->report && $this->report->hasConfiguredColumns()) {
+            foreach ($this->report->getColumnOrder() as $field) {
+                $value = $record[$field] ?? '';
+                $this->output .= "    <td>" . htmlspecialchars($value) . "</td>\n";
+            }
+        } else {
+            // Fallback
+            foreach ($record as $key => $value) {
+                if ($key === 'id') continue;
+                $this->output .= "    <td>" . htmlspecialchars($value) . "</td>\n";
+            }
         }
-        $this->output .= "</tr>\n";
+
+        $this->output .= "  </tr>\n";
     }
 
     private function renderGroupFooter(int $level, array $context): void

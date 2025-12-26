@@ -31,6 +31,12 @@ abstract class AbstractReport implements ReportInterface
     /** @var Aggregate[] */
     private array $reportAggregates = [];
 
+    /** @var array<string, string>  field => label */
+    private array $columns = [];
+
+    /** @var string[] Ordered list of fields to display */
+    private array $columnOrder = [];
+
     public function setRenderer(RendererInterface $renderer): self
     {
         $this->renderer = $renderer;
@@ -155,9 +161,6 @@ abstract class AbstractReport implements ReportInterface
 
         // Summary and footer
         // Build report-level context
-        $reportContext = [
-            'recordCount' => 0, // we'll fill properly below
-        ];
 
         foreach ($this->reportAggregates as $name => $agg) {
             $reportContext[$name] = $agg->getValue();
@@ -170,7 +173,7 @@ abstract class AbstractReport implements ReportInterface
             $totalRecords += count($state['records']);
         }
 
-        $reportContext['recordCount'] = $totalRecords;
+        $reportContext['recordCount'] = $totalRecords ?? 0;
 
         $output .= $this->renderBand('summary', null, $reportContext);
         $output .= $this->renderBand('reportFooter');
@@ -281,5 +284,39 @@ abstract class AbstractReport implements ReportInterface
         // If not Renderer used, then output debug info
         $name = $level !== null ? $type . '_' . $level : $type;
         return "<!-- $name band rendered with context: " . json_encode($context) . " -->\n";
+    }
+
+    public function setColumns(array $columns): self
+    {
+        // $columns can be ['field' => 'Label'] or simple ['field1', 'field2']
+        $this->columns = [];
+        $this->columnOrder = [];
+
+        foreach ($columns as $field => $label) {
+            if (is_int($field)) {
+                // Numeric key → simple list of fields, use ucfirst as label
+                $field = $label;
+                $label = ucfirst($field);
+            }
+            $this->columns[$field] = $label;
+            $this->columnOrder[] = $field;
+        }
+
+        return $this;
+    }
+
+    public function getColumnOrder(): array
+    {
+        return $this->columnOrder;
+    }
+
+    public function getColumnLabel(string $field): string
+    {
+        return $this->columns[$field] ?? ucfirst($field);
+    }
+
+    public function hasConfiguredColumns(): bool
+    {
+        return !empty($this->columnOrder);
     }
 }

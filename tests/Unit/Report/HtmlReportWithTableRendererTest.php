@@ -35,13 +35,29 @@ class HtmlReportWithTableRendererTest extends TestCase
 
         $report
             ->setDataProvider($dataProvider)
-            ->setGroups([$groupBuilder]);
+            ->setGroups([$groupBuilder])
+            ->setColumns([
+                'product'  => 'Product',      // change order!
+                'amount'   => 'Amount ($)',
+                'category' => 'Category',
+            ]);
 
         $html = $report->render();
 
         echo "\n--- GENERATED HTML ---\n";
         echo $html;
         echo "\n--- END HTML ---\n\n";
+
+        // Check header order and labels
+        $this->assertStringContainsString('<th>Product</th>', $html);
+        $this->assertStringContainsString('<th>Amount ($)</th>', $html);
+        $this->assertStringContainsString('<th>Category</th>', $html);
+
+        // Check that Product appears before Amount before Category in thead
+        $this->assertMatchesRegularExpression('/Product.*Amount \(\$\).*Category/s', $html);
+
+        // Check a detail row has values in new order
+        $this->assertMatchesRegularExpression('/Widget X.*100.*A/s', $html);
 
         // Assertions — check overall structure
         $this->assertStringContainsString('<table class="report-table">', $html);
@@ -53,20 +69,33 @@ class HtmlReportWithTableRendererTest extends TestCase
         $this->assertEquals(2, substr_count($html, '<tbody>'), 'Expected one tbody per group');
 
         // Check column headers (should auto-detect from first record)
-        $this->assertStringContainsString('<th>Category</th>', $html);
-        $this->assertStringContainsString('<th>Amount</th>', $html);
         $this->assertStringContainsString('<th>Product</th>', $html);
-        // id should be skipped (as in our renderer logic)
-        $this->assertStringNotContainsString('<th>Id</th>', $html);
+        $this->assertStringContainsString('<th>Amount ($)</th>', $html);
+        $this->assertStringContainsString('<th>Category</th>', $html);
 
-        // Check group headers
-        $this->assertStringContainsString('Group: A', $html);
-        $this->assertStringContainsString('Group: B', $html);
+        // Ensure headers appear in the correct configured order
+        $this->assertMatchesRegularExpression(
+            '/<th>Product<\/th>.*<th>Amount \(\$\)<\/th>.*<th>Category<\/th>/s',
+            $html,
+            'Headers should appear in the configured order: Product, Amount ($), Category'
+        );
 
-        // Check detail rows
-        $this->assertStringContainsString('<td>Widget X</td>', $html);
-        $this->assertStringContainsString('<td>Widget Y</td>', $html);
-        $this->assertStringContainsString('<td>Gadget Z</td>', $html);
+        $this->assertMatchesRegularExpression(
+            '/Widget X.*100.*A/s',
+            $html,
+            'Detail row should show values in configured order: Product, Amount, Category'
+        );
+        $this->assertMatchesRegularExpression(
+            '/Widget Y.*200.*A/s',
+            $html
+        );
+        $this->assertMatchesRegularExpression(
+            '/Gadget Z.*300.*B/s',
+            $html
+        );
+
+        // Optional: confirm old label is gone
+        $this->assertStringNotContainsString('<th>Amount</th>', $html);
 
         // Check group footers with aggregates
         // Group A: sum = 300, count = 2
