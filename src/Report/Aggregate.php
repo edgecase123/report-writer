@@ -34,7 +34,6 @@ class Aggregate
             ? ($this->field)($record)
             : ($record[$this->field] ?? 0);
 
-        // We force float to avoid integer overflow surprises
         $value = (float) $value;
 
         switch ($this->type) {

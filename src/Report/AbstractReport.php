@@ -64,15 +64,18 @@ abstract class AbstractReport implements ReportInterface
         // Render report header
         $output .= $this->renderBand('reportHeader');
 
-        $previousGroupKeys = [];  // Start empty — we will treat empty as "no previous"
+        $previousGroupKeys = [];  // Empty indicates no previous group key
 
         while ($current !== null) {
             $currentGroupKeys = $this->computeGroupKeys($current);
-            $changedLevels = $this->detectGroupChanges($previousGroupKeys, $currentGroupKeys);
 
-            // 1. Close breaking groups FIRST (so they include the current record in aggregates)
-            if (!empty($previousGroupKeys)) {
-                foreach (array_reverse($changedLevels) as $level => $oldKey) {
+            // Detect if there's a group break and at which level (0 = outermost)
+            $breakLevel = $this->findGroupBreakLevel($previousGroupKeys, $currentGroupKeys);
+
+            if ($breakLevel !== null && !empty($previousGroupKeys)) {
+                // Only close footers if we have previous groups
+                $numLevels = count($this->groupBuilders);
+                for ($level = $numLevels - 1; $level >= $breakLevel; $level--) {
                     $fullKey = implode('|', array_slice($previousGroupKeys, 0, $level + 1));
                     $context = $this->buildGroupContext($fullKey);
                     $output .= $this->renderBand('groupFooter', $level, $context);
@@ -80,19 +83,20 @@ abstract class AbstractReport implements ReportInterface
                 }
             }
 
-            // 2. Open new/changed groups
-            foreach ($changedLevels as $level => $newKey) {
-                $fullKey = implode('|', array_slice($currentGroupKeys, 0, $level + 1));
-                $this->initializeGroupState($level, $fullKey);
+            // Always open new headers if there was a break (even on the first record)
+            if ($breakLevel !== null) {
+                $numLevels = count($this->groupBuilders);
+                for ($level = $breakLevel; $level < $numLevels; $level++) {
+                    $fullKey = implode('|', array_slice($currentGroupKeys, 0, $level + 1));
+                    $this->initializeGroupState($level, $fullKey);
+                    $this->groupStates[$fullKey]['firstRecord'] = $current;
 
-                // First record of this group is the current one
-                $this->groupStates[$fullKey]['firstRecord'] = $current;
-
-                $context = $this->buildGroupContext($fullKey);
-                $output .= $this->renderBand('groupHeader', $level, $context);
+                    $context = $this->buildGroupContext($fullKey);
+                    $output .= $this->renderBand('groupHeader', $level, $context);
+                }
             }
 
-            // 3. Update group stack to current
+            // Update group stack to current
             $this->groupStack = $currentGroupKeys;
 
             // Accumulate the current record into ALL active groups (old ones already
@@ -145,9 +149,30 @@ abstract class AbstractReport implements ReportInterface
         return $keys;
     }
 
+    /**
+     * Returns the lowest level (most outer) where a group break occurred.
+     * Returns null if no break.
+     */
+    private function findGroupBreakLevel(array $previous, array $current): ?int
+    {
+        $maxLevel = max(count($previous), count($current)) - 1;
+
+        for ($level = 0; $level <= $maxLevel; $level++) {
+            $prev = $previous[$level] ?? null;
+            $curr = $current[$level] ?? null;
+
+            if ($prev !== $curr) {
+                return $level; // First difference = the break level
+            }
+        }
+
+        return null;
+    }
+
     private function detectGroupChanges(array $previous, array $current): array
     {
         $changes = [];
+
         // Get the least number of keys to process
         $min = min(count($previous), count($current));
 
@@ -156,9 +181,11 @@ abstract class AbstractReport implements ReportInterface
                 $changes[$i] = $current[$i];
             }
         }
+
         for ($i = $min; $i < count($current); $i++) {
             $changes[$i] = $current[$i];
         }
+
         return $changes;
     }
 
@@ -184,10 +211,6 @@ abstract class AbstractReport implements ReportInterface
     {
         $state = $this->groupStates[$fullKey] ?? ['aggregates' => [], 'calculations' => [], 'records' => []];
 
-        // <<< TEMPORARY DEBUG >>>
-        error_log("buildGroupContext($fullKey) - aggregates count: " . count($state['aggregates'] ?? []));
-        error_log("buildGroupContext($fullKey) - aggregate keys: " . implode(', ', array_keys($state['aggregates'] ?? [])));
-
         $context = [
             'firstRecord' => $state['firstRecord'] ?? null,
             'lastRecord'  => $state['lastRecord'] ?? null,
@@ -195,7 +218,6 @@ abstract class AbstractReport implements ReportInterface
         ];
 
         foreach ($state['aggregates'] as $name => $agg) {
-            error_log("Adding aggregate '$name' with value " . $agg->getValue());
             $context[$name] = $agg->getValue();
         }
 

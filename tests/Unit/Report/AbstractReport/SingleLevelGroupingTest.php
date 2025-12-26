@@ -44,25 +44,7 @@ class SingleLevelGroupingTest extends TestCase
             ->setGroups([$groupBuilder]);
 
         $report->render();
-
         $rendered = $report->getRenderedBands();
-
-        echo "\n--- FULL RENDERED BANDS DEBUG ---\n";
-        foreach ($rendered as $index => $call) {
-            echo "$index: name = " . $call['name'] . "\n";
-            echo "   context keys: " . implode(', ', array_keys($call['context'] ?? [])) . "\n";
-            if (isset($call['context']['firstRecord']) && $call['context']['firstRecord'] !== null) {
-                echo "   firstRecord category: " . $call['context']['firstRecord']['category'] . "\n";
-            }
-            if (isset($call['context']['lastRecord']) && $call['context']['lastRecord'] !== null) {
-                echo "   lastRecord category: " . $call['context']['lastRecord']['category'] . "\n";
-            }
-            if (isset($call['context']['recordCount'])) {
-                echo "   recordCount: " . $call['context']['recordCount'] . "\n";
-            }
-        }
-        echo "--- END DEBUG ---\n\n";
-
         $bandNames = array_map(fn($call) => $call['name'], $rendered);
 
         // Band order — this should still pass
@@ -169,17 +151,6 @@ class SingleLevelGroupingTest extends TestCase
 
         // Extract band for assertions
         $bands = $report->getRenderedBands();
-
-        echo "\n--- GROUP FOOTER DEBUG ---\n";
-        foreach ($bands as $i => $band) {
-            if ($band['name'] === 'groupFooter_0') {
-                $ctx = $band['context'];
-                $cat = $ctx['firstRecord']['category'] ?? 'UNKNOWN';
-                $total = $ctx['totalAmount'] ?? 'N/A';
-                echo "Footer $i: category = $cat, totalAmount = $total\n";
-            }
-        }
-        echo "--- END ---\n\n";
 
         // Collect all group footers in order
         $groupFooters = [];
