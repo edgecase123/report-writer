@@ -31,12 +31,12 @@ abstract class AbstractReport implements ReportInterface
     /** @var Aggregate[] */
     private array $reportAggregates = [];
 
-    /** @var array<string, string>  field => label */
-    private array $columns = [];
-
-    /** @var string[] Ordered list of fields to display */
+    /** @var string[] An ordered list of fields to display */
     private array $columnOrder = [];
 
+
+    /** @var array<string, array{label:string, format?:string|callable}> */
+    private array $columnConfig = [];
     public function setRenderer(RendererInterface $renderer): self
     {
         $this->renderer = $renderer;
@@ -288,17 +288,27 @@ abstract class AbstractReport implements ReportInterface
 
     public function setColumns(array $columns): self
     {
-        // $columns can be ['field' => 'Label'] or simple ['field1', 'field2']
-        $this->columns = [];
+        $this->columnConfig = [];
         $this->columnOrder = [];
 
-        foreach ($columns as $field => $label) {
-            if (is_int($field)) {
-                // Numeric key → simple list of fields, use ucfirst as label
-                $field = $label;
-                $label = ucfirst($field);
+        foreach ($columns as $field => $config) {
+            if (is_string($config)) {
+                // Simple: 'field' => 'Label'
+                $label = $config;
+                $format = null;
+            } elseif (is_array($config)) {
+                // Rich: 'field' => ['label' => '...', 'format' => '...']
+                $label = $config['label'] ?? ucfirst($field);
+                $format = $config['format'] ?? null;
+            } else {
+                // Invalid
+                continue;
             }
-            $this->columns[$field] = $label;
+
+            $this->columnConfig[$field] = [
+                'label'  => $label,
+                'format' => $format,
+            ];
             $this->columnOrder[] = $field;
         }
 
@@ -312,7 +322,12 @@ abstract class AbstractReport implements ReportInterface
 
     public function getColumnLabel(string $field): string
     {
-        return $this->columns[$field] ?? ucfirst($field);
+        return $this->columnConfig[$field]['label'] ?? ucfirst($field);
+    }
+
+    public function getColumnFormat(string $field)
+    {
+        return $this->columnConfig[$field]['format'] ?? null;
     }
 
     public function hasConfiguredColumns(): bool
