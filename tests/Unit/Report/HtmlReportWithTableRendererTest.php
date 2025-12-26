@@ -59,7 +59,7 @@ class HtmlReportWithTableRendererTest extends TestCase
             ->setGroups([$groupBuilder])
             ->setColumns([
                 'product' => 'Product',
-                'amount'  => ['label' => 'Amount', 'format' => 'currency'],
+                'amount'  => ['label' => 'Amount ($)', 'format' => 'currency'],
                 'active'  => ['label' => 'Active', 'format' => 'boolean'],
                 'created_at' => ['label' => 'Created', 'format' => 'date:M j, Y'],
                 'category' => 'Category',
@@ -83,7 +83,7 @@ class HtmlReportWithTableRendererTest extends TestCase
         // 2. Column headers — exact labels and correct order
         // --------------------------------------------------------------------
         $this->assertStringContainsString('<th>Product</th>', $html);
-        $this->assertStringContainsString('<th>Amount</th>', $html);
+        $this->assertStringContainsString('<th>Amount ($)</th>', $html);
         $this->assertStringContainsString('<th>Active</th>', $html);
         $this->assertStringContainsString('<th>Created</th>', $html);
         $this->assertStringContainsString('<th>Category</th>', $html);
