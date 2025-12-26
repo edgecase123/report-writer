@@ -2,21 +2,28 @@
 
 namespace ReportWriter\Report;
 
-use Twig\Environment as TwigEnvironment;
+use ReportWriter\Report\Renderer\RendererInterface;
 
 class HtmlReport extends AbstractReport
 {
+    private string $output = '';
+
+    public function __construct(RendererInterface $renderer)
+    {
+        $this->renderer = $renderer;
+    }
+
     protected function renderBand(string $type, ?int $level = null, $context = null): string
     {
-        $name = $level !== null ? $type . '_' . $level : $type;
-        $templateName = 'templates/report/' . $name . 'html.twig';
+        $this->renderer->renderBand($type, $level, $context ?? []);
 
-        static $renderer = null;
-        if ($renderer === null) {
-            $renderer = new TwigRenderer();
-        }
+        return '';
+    }
 
-        return $renderer->render($templateName, $context ?? []);
+    public function render(): string
+    {
+        parent::render();
 
+        return $this->renderer->getOutput();
     }
 }

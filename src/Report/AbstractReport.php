@@ -28,6 +28,9 @@ abstract class AbstractReport implements ReportInterface
     /** @var array $groupStates */
     private array $groupStates = [];
 
+    /** @var Aggregate[] */
+    private array $reportAggregates = [];
+
     public function setRenderer(RendererInterface $renderer): self
     {
         $this->renderer = $renderer;
@@ -126,6 +129,11 @@ abstract class AbstractReport implements ReportInterface
                 // for ongoing groups it was set earlier
             }
 
+            // Accumulate into report-level aggregates
+            foreach ($this->reportAggregates as $agg) {
+                $agg->accumulate($current);
+            }
+
             // Render detail band
             $output .= $this->renderBand('detail', null, $current);
 
@@ -146,7 +154,25 @@ abstract class AbstractReport implements ReportInterface
         }
 
         // Summary and footer
-        $output .= $this->renderBand('summary');
+        // Build report-level context
+        $reportContext = [
+            'recordCount' => 0, // we'll fill properly below
+        ];
+
+        foreach ($this->reportAggregates as $name => $agg) {
+            $reportContext[$name] = $agg->getValue();
+        }
+
+        // Count total records
+        $totalRecords = 0;
+
+        foreach ($this->groupStates as $state) {
+            $totalRecords += count($state['records']);
+        }
+
+        $reportContext['recordCount'] = $totalRecords;
+
+        $output .= $this->renderBand('summary', null, $reportContext);
         $output .= $this->renderBand('reportFooter');
 
         return $output;
@@ -210,6 +236,10 @@ abstract class AbstractReport implements ReportInterface
 
         foreach ($builder->getAggregates() as $def) {
             $aggregates[$def['as']] = new Aggregate($def['type'], $def['field']);
+
+            if (!isset($this->reportAggregates[$def['as']])) {
+                $this->reportAggregates[$def['as']] = new Aggregate($def['type'], $def['field']);
+            }
         }
 
         $this->groupStates[$fullKey] = [
