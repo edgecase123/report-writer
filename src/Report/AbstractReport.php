@@ -31,6 +31,12 @@ abstract class AbstractReport implements ReportInterface
     /** @var Aggregate[] */
     private array $reportAggregates = [];
 
+    /** @var string[] An ordered list of fields to display */
+    private array $columnOrder = [];
+
+
+    /** @var array<string, array{label:string, format?:string|callable}> */
+    private array $columnConfig = [];
     public function setRenderer(RendererInterface $renderer): self
     {
         $this->renderer = $renderer;
@@ -155,9 +161,6 @@ abstract class AbstractReport implements ReportInterface
 
         // Summary and footer
         // Build report-level context
-        $reportContext = [
-            'recordCount' => 0, // we'll fill properly below
-        ];
 
         foreach ($this->reportAggregates as $name => $agg) {
             $reportContext[$name] = $agg->getValue();
@@ -170,7 +173,7 @@ abstract class AbstractReport implements ReportInterface
             $totalRecords += count($state['records']);
         }
 
-        $reportContext['recordCount'] = $totalRecords;
+        $reportContext['recordCount'] = $totalRecords ?? 0;
 
         $output .= $this->renderBand('summary', null, $reportContext);
         $output .= $this->renderBand('reportFooter');
@@ -281,5 +284,54 @@ abstract class AbstractReport implements ReportInterface
         // If not Renderer used, then output debug info
         $name = $level !== null ? $type . '_' . $level : $type;
         return "<!-- $name band rendered with context: " . json_encode($context) . " -->\n";
+    }
+
+    public function setColumns(array $columns): self
+    {
+        $this->columnConfig = [];
+        $this->columnOrder = [];
+
+        foreach ($columns as $field => $config) {
+            if (is_string($config)) {
+                // Simple: 'field' => 'Label'
+                $label = $config;
+                $format = null;
+            } elseif (is_array($config)) {
+                // Rich: 'field' => ['label' => '...', 'format' => '...']
+                $label = $config['label'] ?? ucfirst($field);
+                $format = $config['format'] ?? null;
+            } else {
+                // Invalid
+                continue;
+            }
+
+            $this->columnConfig[$field] = [
+                'label'  => $label,
+                'format' => $format,
+            ];
+            $this->columnOrder[] = $field;
+        }
+
+        return $this;
+    }
+
+    public function getColumnOrder(): array
+    {
+        return $this->columnOrder;
+    }
+
+    public function getColumnLabel(string $field): string
+    {
+        return $this->columnConfig[$field]['label'] ?? ucfirst($field);
+    }
+
+    public function getColumnFormat(string $field)
+    {
+        return $this->columnConfig[$field]['format'] ?? null;
+    }
+
+    public function hasConfiguredColumns(): bool
+    {
+        return !empty($this->columnOrder);
     }
 }

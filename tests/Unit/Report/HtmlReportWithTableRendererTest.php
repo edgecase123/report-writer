@@ -13,9 +13,30 @@ use ReportWriter\Report\Renderer\HtmlTableRenderer;
 class HtmlReportWithTableRendererTest extends TestCase
 {
     private const SAMPLE_DATA = [
-        ['id' => 1, 'category' => 'A', 'amount' => 100, 'product' => 'Widget X'],
-        ['id' => 2, 'category' => 'A', 'amount' => 200, 'product' => 'Widget Y'],
-        ['id' => 3, 'category' => 'B', 'amount' => 300, 'product' => 'Gadget Z'],
+        [
+            'id' => 1,
+            'category' => 'A',
+            'amount' => 1234.5,
+            'product' => 'Widget X',
+            'active' => true,
+            'created_at' => '2025-01-15',
+        ],
+        [
+            'id' => 2,
+            'category' => 'A',
+            'amount' => 987.65,
+            'product' => 'Widget Y',
+            'active' => false,
+            'created_at' => '2025-02-20',
+        ],
+        [
+            'id' => 3,
+            'category' => 'B',
+            'amount' => 500,
+            'product' => 'Gadget Z',
+            'active' => true,
+            'created_at' => '2025-03-10',
+        ],
     ];
 
     public function test_renders_full_html_table_with_correct_structure_and_aggregates(): void
@@ -35,58 +56,114 @@ class HtmlReportWithTableRendererTest extends TestCase
 
         $report
             ->setDataProvider($dataProvider)
-            ->setGroups([$groupBuilder]);
+            ->setGroups([$groupBuilder])
+            ->setColumns([
+                'product' => 'Product',
+                'amount'  => ['label' => 'Amount ($)', 'format' => 'currency'],
+                'active'  => ['label' => 'Active', 'format' => 'boolean'],
+                'created_at' => ['label' => 'Created', 'format' => 'date:M j, Y'],
+                'category' => 'Category',
+            ]);
 
         $html = $report->render();
 
-        echo "\n--- GENERATED HTML ---\n";
-        echo $html;
-        echo "\n--- END HTML ---\n\n";
+//        echo "\n--- GENERATED HTML ---\n";
+//        echo $html;
+//        echo "\n--- END HTML ---\n\n";
 
-        // Assertions — check overall structure
+        // --------------------------------------------------------------------
+        // 1. Basic structure
+        // --------------------------------------------------------------------
         $this->assertStringContainsString('<table class="report-table">', $html);
-        $this->assertStringContainsString('</table>', $html);
-
         $this->assertStringContainsString('<thead>', $html);
-        $this->assertStringContainsString('<tbody>', $html);
-        // We expect two <tbody> sections (one per group)
         $this->assertEquals(2, substr_count($html, '<tbody>'), 'Expected one tbody per group');
+        $this->assertStringContainsString('<tfoot>', $html);
 
-        // Check column headers (should auto-detect from first record)
-        $this->assertStringContainsString('<th>Category</th>', $html);
-        $this->assertStringContainsString('<th>Amount</th>', $html);
+        // --------------------------------------------------------------------
+        // 2. Column headers — exact labels and correct order
+        // --------------------------------------------------------------------
         $this->assertStringContainsString('<th>Product</th>', $html);
-        // id should be skipped (as in our renderer logic)
-        $this->assertStringNotContainsString('<th>Id</th>', $html);
+        $this->assertStringContainsString('<th>Amount ($)</th>', $html);
+        $this->assertStringContainsString('<th>Active</th>', $html);
+        $this->assertStringContainsString('<th>Created</th>', $html);
+        $this->assertStringContainsString('<th>Category</th>', $html);
 
-        // Check group headers
-        $this->assertStringContainsString('Group: A', $html);
-        $this->assertStringContainsString('Group: B', $html);
-
-        // Check detail rows
-        $this->assertStringContainsString('<td>Widget X</td>', $html);
-        $this->assertStringContainsString('<td>Widget Y</td>', $html);
-        $this->assertStringContainsString('<td>Gadget Z</td>', $html);
-
-        // Check group footers with aggregates
-        // Group A: sum = 300, count = 2
-        $this->assertStringContainsString('300', $html); // sumAmount
-        $this->assertStringContainsString('Total for group', $html);
-
-        // We can be more precise by checking context around the number
         $this->assertMatchesRegularExpression(
-            '/Group: A.*?300/s',
+            '/Product.*Amount.*Active.*Created.*Category/s',
             $html,
-            'Group A should show sum of 300'
+            'Headers must appear in the exact configured order'
+        );
+
+        // --------------------------------------------------------------------
+        // 3. Formatted values in detail rows
+        // --------------------------------------------------------------------
+        $this->assertStringContainsString('<td>$1,234.50</td>', $html);
+        $this->assertStringContainsString('<td>$987.65</td>', $html);
+        $this->assertStringContainsString('<td>$500.00</td>', $html);
+
+        $this->assertStringContainsString('<td>Yes</td>', $html);
+        $this->assertStringContainsString('<td>No</td>', $html);
+
+        $this->assertStringContainsString('<td>Jan 15, 2025</td>', $html);
+        $this->assertStringContainsString('<td>Feb 20, 2025</td>', $html);
+        $this->assertStringContainsString('<td>Mar 10, 2025</td>', $html);
+
+        // --------------------------------------------------------------------
+        // 4. Detail row order (values appear in column order)
+        // --------------------------------------------------------------------
+        $this->assertMatchesRegularExpression(
+            '/Widget X.*\$1,234\.50.*Yes.*Jan 15, 2025.*A/s',
+            $html,
+            'Widget X row respects column order and formatting'
         );
 
         $this->assertMatchesRegularExpression(
-            '/Group: B.*?300/s',
+            '/Widget Y.*\$987\.65.*No.*Feb 20, 2025.*A/s',
             $html,
-            'Group B should show sum of 300'
+            'Widget Y row respects column order and formatting'
         );
 
-        // Check report header and footer
+        $this->assertMatchesRegularExpression(
+            '/Gadget Z.*\$500\.00.*Yes.*Mar 10, 2025.*B/s',
+            $html,
+            'Gadget Z row respects column order and formatting'
+        );
+
+        // --------------------------------------------------------------------
+        // 5. Group totals (updated for current data)
+        // --------------------------------------------------------------------
+        $this->assertMatchesRegularExpression(
+            '/Group: A.*?2222\.15/s',
+            $html,
+            'Group A total should be 2222.15'
+        );
+
+        $this->assertMatchesRegularExpression(
+            '/Group: B.*?500/s',
+            $html,
+            'Group B total should be 500.00'
+        );
+
+        // --------------------------------------------------------------------
+        // 6. Grand total
+        // --------------------------------------------------------------------
+        $this->assertStringContainsString('Grand Total: 2722.15', $html);
+
+        // --------------------------------------------------------------------
+        // 7. Group header and footer structure
+        // --------------------------------------------------------------------
+        $this->assertStringContainsString(
+            '<td colspan="5"><strong>Group: A</strong></td>',
+            $html
+        );
+        $this->assertStringContainsString(
+            '<td colspan="4"><strong>Total for group</strong></td>',
+            $html
+        );
+
+        // --------------------------------------------------------------------
+        // 8. Report header and footer
+        // --------------------------------------------------------------------
         $this->assertStringContainsString('<h1>Report Title</h1>', $html);
         $this->assertStringContainsString('Report generated by ReportWriter', $html);
     }
