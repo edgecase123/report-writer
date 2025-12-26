@@ -39,9 +39,9 @@ class HtmlReportWithTableRendererTest extends TestCase
 
         $html = $report->render();
 
-//        echo "\n--- GENERATED HTML ---\n";
-//        echo $html;
-//        echo "\n--- END HTML ---\n\n";
+        echo "\n--- GENERATED HTML ---\n";
+        echo $html;
+        echo "\n--- END HTML ---\n\n";
 
         // Assertions — check overall structure
         $this->assertStringContainsString('<table class="report-table">', $html);
