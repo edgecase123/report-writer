@@ -4,6 +4,34 @@ namespace ReportWriter\Report\Renderer;
 
 abstract class AbstractRenderer implements RendererInterface
 {
+    protected string $output = '';
+
+    abstract public function renderBand(string $type, ?int $level, $context): string;
+
+    public function getOutput(): string
+    {
+        return $this->output;
+    }
+
+    // === HELPERS ===
+
+    protected function append(string $html): void
+    {
+        $this->output .= $html;
+    }
+
+    protected function appendLine(string $html = '', int $indent = 0): void
+    {
+        $this->output .= str_repeat('  ', $indent) . $html . "\n";
+    }
+
+    protected function escape($value): string
+    {
+        return htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    }
+
+    // === SHARED FORMATTING ===
+
     protected function formatValue($value, ?string $format): string
     {
         if ($format === null) {
@@ -38,8 +66,7 @@ abstract class AbstractRenderer implements RendererInterface
                 return $value;
 
             default:
-                // If format is a string like 'date:Y-m-d'
-                if (str_starts_with($format, 'date:')) {
+                if (substr($format, 0, 5) === 'date:') {
                     $phpFormat = substr($format, 5);
                     if ($value instanceof \DateTimeInterface) {
                         return $value->format($phpFormat);
