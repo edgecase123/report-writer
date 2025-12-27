@@ -10,6 +10,7 @@ use ReportWriter\Report\Data\ArrayDataProvider;
 use ReportWriter\Report\HtmlReport;
 use ReportWriter\Report\Renderer\HtmlTableRenderer;
 
+
 class HtmlReportWithTableRendererTest extends TestCase
 {
     private const SAMPLE_DATA = [
@@ -41,7 +42,6 @@ class HtmlReportWithTableRendererTest extends TestCase
 
     public function test_renders_full_html_table_with_correct_structure_and_aggregates(): void
     {
-
         // Setup data provider (we'll create a simple ArrayDataProvider)
         $dataProvider = new ArrayDataProvider(self::SAMPLE_DATA);
 
