@@ -142,14 +142,52 @@ class HtmlTableRenderer extends AbstractRenderer
 
     private function renderGroupFooter(int $level, array $context): void
     {
-        $sum = $context['sumAmount'] ?? 0;
+        // Find the first numeric aggregate value in the context
+        $aggregateValue = null;
+        foreach ($context as $key => $value) {
+            if (is_numeric($value) && $key !== 'recordCount') {
+                $aggregateValue = $value;
+                break; // use the first numeric aggregate we find
+            }
+        }
+
+        // If no aggregate found, just close tbody and exit
+        if ($aggregateValue === null) {
+            if ($this->tbodyOpened) {
+                $this->appendLine('</tbody>');
+                $this->tbodyOpened = false;
+            }
+            return;
+        }
+
+        // Format the value — default to currency, but check column config if key matches a field
+        $format = 'currency';
+        if ($this->report && $this->report->hasConfiguredColumns()) {
+            foreach ($this->report->getColumnOrder() as $field) {
+                if (isset($context[$field]) && $context[$field] === $aggregateValue) {
+                    // This is crude but works: if the aggregate value matches a raw column value, use its format
+                    // Better long-term: pass aggregate metadata, but for 7.4 simplicity this is fine
+                    $format = $this->report->getColumnFormat($field) ?: 'currency';
+                    break;
+                }
+            }
+        }
+
+        $formatted = $this->formatValue($aggregateValue, $format);
+
+        // Right-align total (common report style)
+        $labelColspan = $this->columnCount - 1;
 
         $this->appendLine('<tr class="group-footer">');
-        $this->appendLine("<td colspan=\"" . ($this->columnCount - 1) . "\"><strong>Total for group</strong></td>");
-        $this->appendLine("<td><strong>" . htmlspecialchars($sum) . "</strong></td>");
+
+        if ($labelColspan > 0) {
+            $this->appendLine("  <td colspan=\"{$labelColspan}\"><strong>Total for group</strong></td>");
+        }
+
+        $this->appendLine("  <td><strong>" . $this->escape($formatted) . "</strong></td>");
+
         $this->appendLine('</tr>');
 
-        // Close tbody after footer
         if ($this->tbodyOpened) {
             $this->appendLine('</tbody>');
             $this->tbodyOpened = false;

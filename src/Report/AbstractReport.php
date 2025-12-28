@@ -102,7 +102,6 @@ abstract class AbstractReport implements ReportInterface
                     $fullKey = implode('|', array_slice($previousGroupKeys, 0, $level + 1));
                     $context = $this->buildGroupContext($fullKey);
                     $output .= $this->renderBand('groupFooter', $level, $context);
-                    unset($this->groupStates[$fullKey]);
                 }
             }
 
