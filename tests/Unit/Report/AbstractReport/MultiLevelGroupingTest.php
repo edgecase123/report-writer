@@ -108,4 +108,47 @@ class MultiLevelGroupingTest extends TestCase
         $this->assertEquals(400.0, $outerFooters[1]['yearTotal']);
         $this->assertEquals(2025, $outerFooters[1]['firstRecord']['year']);
     }
+
+    public function test_group_header_displays_correct_value_when_grouped_by_different_field(): void
+    {
+        $records = [
+            ['id' => 1, 'department' => 'Sales',    'amount' => 100],
+            ['id' => 2, 'department' => 'Sales',    'amount' => 200],
+            ['id' => 3, 'department' => 'Marketing','amount' => 300],
+        ];
+
+        $iterator = new \ArrayIterator($records);
+        $dataProvider = \Mockery::mock(DataProviderInterface::class);
+        $dataProvider->shouldReceive('getRecords')->once()->andReturn($iterator);
+
+        $report = new class extends AbstractReport {
+            public array $renderedBands = [];
+            protected function renderBand(string $type, ?int $level = null, $context = null): string
+            {
+                $name = $level !== null ? $type . '_' . $level : $type;
+                $this->renderedBands[] = ['name' => $name, 'context' => $context];
+                return '';
+            }
+        };
+
+        $groupBuilder = (new GroupBuilder('department'))->sum('sumAmount', 'amount');
+
+        $report
+            ->setDataProvider($dataProvider)
+            ->setGroups([$groupBuilder])
+            ->render();
+
+        // Find the first groupHeader_0 context
+        $headerContext = null;
+        foreach ($report->renderedBands as $band) {
+            if ($band['name'] === 'groupHeader_0') {
+                $headerContext = $band['context'];
+                break;
+            }
+        }
+
+        $this->assertNotNull($headerContext);
+        $this->assertArrayHasKey('groupValue', $headerContext);
+        $this->assertEquals('Sales', $headerContext['groupValue']);
+    }
 }

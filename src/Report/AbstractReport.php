@@ -259,9 +259,9 @@ abstract class AbstractReport implements ReportInterface
         $state = $this->groupStates[$fullKey] ?? ['aggregates' => [], 'calculations' => [], 'records' => []];
 
         $context = [
-            'firstRecord' => $state['firstRecord'] ?? null,
-            'lastRecord'  => $state['lastRecord'] ?? null,
-            'recordCount' => count($state['records'] ?? []),
+            'firstRecord'  => $state['firstRecord'] ?? null,
+            'lastRecord'   => $state['lastRecord'] ?? null,
+            'recordCount'  => count($state['records'] ?? []),
         ];
 
         foreach ($state['aggregates'] as $name => $agg) {
@@ -270,6 +270,27 @@ abstract class AbstractReport implements ReportInterface
 
         foreach ($state['calculations'] as $calc) {
             $context[$calc['as']] = ($calc['callback'])($state + $context);
+        }
+
+        // Add the actual group value for this level
+        // We can derive it from the firstRecord and the group expression at this level
+        if ($state['firstRecord'] && !empty($this->groupBuilders)) {
+            // Find which level this fullKey corresponds to
+            $parts = explode('|', $fullKey);
+            $level = count($parts) - 1;
+
+            if (isset($this->groupBuilders[$level])) {
+                $builder = $this->groupBuilders[$level];
+                $expr = $builder->getExpression();
+
+                $record = $state['firstRecord'];
+
+                $groupValue = is_callable($expr)
+                    ? $expr($record)
+                    : ($record->{$expr} ?? $record[$expr] ?? null);
+
+                $context['groupValue'] = $groupValue;
+            }
         }
 
         return $context;

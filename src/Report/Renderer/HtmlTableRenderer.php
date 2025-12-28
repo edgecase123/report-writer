@@ -74,54 +74,38 @@ class HtmlTableRenderer extends AbstractRenderer
             $this->tbodyOpened = false;
         }
 
-        // Render <thead> only once (level 0)
-        if ($level === 0 && !$this->theadRendered) {
+        $this->ensureColumnsConfigured($context);
+
+        // Render <thead> only once
+        if (!$this->theadRendered) {
+            $this->appendLine('<thead>');
+            $this->appendLine('  <tr>', 1);
+
             if ($this->report && $this->report->hasConfiguredColumns()) {
-                $this->columnOrder = $this->report->getColumnOrder();
-                $this->columnCount = count($this->columnOrder);
-
-                $this->appendLine('<thead>');
-                $this->appendLine('  <tr>', 1);
-
                 foreach ($this->columnOrder as $field) {
-                    $label = $this->report->getColumnLabel($field); // safe because we checked above
+                    $label = $this->report->getColumnLabel($field);
                     $this->appendLine('    <th>' . $this->escape($label) . '</th>', 2);
                 }
-
-                $this->appendLine('  </tr>', 1);
-                $this->appendLine('</thead>');
             } else {
-                // Fallback: auto-detect from first record
-                $sampleRecord = $context['firstRecord'] ?? null;
-
-                if ($sampleRecord) {
-                    $this->columnKeys = array_keys($sampleRecord);
-                    $this->columnKeys = array_filter($this->columnKeys, fn($k) => $k !== 'id');
-                    $this->columnCount = count($this->columnKeys);
-
-                    $this->appendLine("<thead><tr>");
-
-                    foreach ($this->columnKeys as $key) {
-                        $this->appendLine("<th>{$key}</th>", 2);
-                    }
-
-                    $this->appendLine("</tr></thead>");
+                foreach ($this->columnKeys as $key) {
+                    $this->appendLine('    <th>' . $this->escape(ucfirst($key)) . '</th>', 2);
                 }
             }
 
+            $this->appendLine('  </tr>', 1);
+            $this->appendLine('</thead>');
             $this->theadRendered = true;
         }
 
-        // === START NEW TBODY AND ADD GROUP HEADER INSIDE IT ===
+        // Now proceed with group header row...
         $this->appendLine('<tbody>');
         $this->tbodyOpened = true;
 
-        $groupValue = htmlspecialchars($context['firstRecord']['category'] ?? 'Unknown Group');
+        $groupValue = $this->escape((string)($context['groupValue'] ?? 'Unknown Group'));
 
-        $this->appendLine('<tr class="group-header">', 1);
-        $this->appendLine("  <td colspan=\"{$this->columnCount}\"><strong>Group: {$groupValue}</strong></td>", 2);
-        $this->appendLine('</tr>', 1);
-        // === END ===
+        $this->appendLine("  <tr class=\"group-header\">");
+        $this->appendLine("    <td colspan=\"{$this->columnCount}\"><strong>Group: {$groupValue}</strong></td>");
+        $this->appendLine("  </tr>");
     }
 
     private function renderDetail(array $context): void
@@ -193,5 +177,23 @@ class HtmlTableRenderer extends AbstractRenderer
     {
         // Page numbers, signatures, etc.
         // No output for HTML, rendered above. Fall thorough...
+    }
+
+    private function ensureColumnsConfigured(array $context): void
+    {
+        if ($this->columnCount > 0) {
+            return; // already done
+        }
+
+        if ($this->report && $this->report->hasConfiguredColumns()) {
+            $this->columnOrder = $this->report->getColumnOrder();
+            $this->columnCount = count($this->columnOrder);
+        } elseif (!empty($context['firstRecord'])) {
+            // Fallback: auto-detect
+            $record = $context['firstRecord'];
+            $this->columnKeys = array_keys($record);
+            $this->columnKeys = array_filter($this->columnKeys, fn($k) => $k !== 'id');
+            $this->columnCount = count($this->columnKeys);
+        }
     }
 }
