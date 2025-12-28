@@ -82,25 +82,30 @@ class HtmlTableRenderer extends AbstractRenderer
 
                 $this->appendLine('<thead>');
                 $this->appendLine('  <tr>', 1);
+
                 foreach ($this->columnOrder as $field) {
                     $label = $this->report->getColumnLabel($field); // safe because we checked above
                     $this->appendLine('    <th>' . $this->escape($label) . '</th>', 2);
                 }
+
                 $this->appendLine('  </tr>', 1);
                 $this->appendLine('</thead>');
             } else {
                 // Fallback: auto-detect from first record
                 $sampleRecord = $context['firstRecord'] ?? null;
+
                 if ($sampleRecord) {
                     $this->columnKeys = array_keys($sampleRecord);
                     $this->columnKeys = array_filter($this->columnKeys, fn($k) => $k !== 'id');
                     $this->columnCount = count($this->columnKeys);
 
-                    $this->output .= "<thead>\n  <tr>\n";
+                    $this->appendLine("<thead><tr>");
+
                     foreach ($this->columnKeys as $key) {
-                        $this->output .= "    <th>" . htmlspecialchars(ucfirst($key)) . "</th>\n";
+                        $this->appendLine("<th>{$key}</th>", 2);
                     }
-                    $this->output .= "  </tr>\n</thead>\n";
+
+                    $this->appendLine("</tr></thead>");
                 }
             }
 
@@ -108,14 +113,14 @@ class HtmlTableRenderer extends AbstractRenderer
         }
 
         // === START NEW TBODY AND ADD GROUP HEADER INSIDE IT ===
-        $this->output .= "<tbody>\n";
+        $this->appendLine('<tbody>');
         $this->tbodyOpened = true;
 
         $groupValue = htmlspecialchars($context['firstRecord']['category'] ?? 'Unknown Group');
 
-        $this->output .= "  <tr class=\"group-header\">\n";
-        $this->output .= "    <td colspan=\"{$this->columnCount}\"><strong>Group: {$groupValue}</strong></td>\n";
-        $this->output .= "  </tr>\n";
+        $this->appendLine('<tr class="group-header">', 1);
+        $this->appendLine("  <td colspan=\"{$this->columnCount}\"><strong>Group: {$groupValue}</strong></td>", 2);
+        $this->appendLine('</tr>', 1);
         // === END ===
     }
 
@@ -124,13 +129,13 @@ class HtmlTableRenderer extends AbstractRenderer
         $this->openTableIfNeeded();
 
         if (!$this->tbodyOpened) {
-            $this->output .= "<tbody>\n";
+            $this->appendLine('<tbody>');
             $this->tbodyOpened = true;
         }
 
         $record = $context;
 
-        $this->output .= "  <tr>\n";
+        $this->appendLine('<tr class="detail">', 1);
 
         if ($this->report && $this->report->hasConfiguredColumns()) {
             foreach ($this->report->getColumnOrder() as $field) {
@@ -144,25 +149,25 @@ class HtmlTableRenderer extends AbstractRenderer
             // Fallback auto-detect
             foreach ($record as $key => $value) {
                 if ($key === 'id') continue;
-                $this->output .= "    <td>" . htmlspecialchars($value) . "</td>\n";
+                $this->appendLine("    <td>" . htmlspecialchars($value) . "</td>", 2);
             }
         }
 
-        $this->output .= "  </tr>\n";
+        $this->appendLine('</tr>', 1);
     }
 
     private function renderGroupFooter(int $level, array $context): void
     {
         $sum = $context['sumAmount'] ?? 0;
 
-        $this->output .= "<tr class=\"group-footer\">\n";
-        $this->output .= "<td colspan=\"" . ($this->columnCount - 1) . "\"><strong>Total for group</strong></td>\n";
-        $this->output .= "<td><strong>" . htmlspecialchars($sum) . "</strong></td>\n";
-        $this->output .= "</tr>\n";
+        $this->appendLine('<tr class="group-footer">');
+        $this->appendLine("<td colspan=\"" . ($this->columnCount - 1) . "\"><strong>Total for group</strong></td>");
+        $this->appendLine("<td><strong>" . htmlspecialchars($sum) . "</strong></td>");
+        $this->appendLine('</tr>');
 
         // Close tbody after footer
         if ($this->tbodyOpened) {
-            $this->output .= "</tbody>\n";
+            $this->appendLine('</tbody>');
             $this->tbodyOpened = false;
         }
     }
@@ -175,13 +180,13 @@ class HtmlTableRenderer extends AbstractRenderer
 
         $grandTotal = $context['sumAmount'] ?? 'N/A';
 
-        $this->output .= "<tfoot>\n";
-        $this->output .= "<tr class=\"summary\">\n";
-        $this->output .= "<td colspan=\"{$this->columnCount}\">";
-        $this->output .= "<strong>Grand Total: " . htmlspecialchars($grandTotal) . "</strong>";
-        $this->output .= "</td>\n";
-        $this->output .= "</tr>\n";
-        $this->output .= "</tfoot>\n";
+        $this->appendLine('<tfoot>');
+        $this->appendLine('<tr class=\"summary\">');
+        $this->appendLine('<td colspan="{$this->columnCount}">');
+        $this->appendLine("<strong>Grand Total: " . htmlspecialchars($grandTotal) . "</strong>");
+        $this->appendLine('</td>');
+        $this->appendLine('</tr>');
+        $this->appendLine('</tfoot>');
     }
 
     private function renderReportFooter(array $context): void
