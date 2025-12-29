@@ -211,26 +211,6 @@ abstract class AbstractReport implements ReportInterface
         return null;
     }
 
-    private function detectGroupChanges(array $previous, array $current): array
-    {
-        $changes = [];
-
-        // Get the least number of keys to process
-        $min = min(count($previous), count($current));
-
-        for ($i = 0; $i < $min; $i++) {
-            if ($previous[$i] !== $current[$i]) {
-                $changes[$i] = $current[$i];
-            }
-        }
-
-        for ($i = $min; $i < count($current); $i++) {
-            $changes[$i] = $current[$i];
-        }
-
-        return $changes;
-    }
-
     private function initializeGroupState(int $level, string $fullKey): void
     {
         $builder = $this->groupBuilders[$level];
