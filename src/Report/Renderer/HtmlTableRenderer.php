@@ -203,8 +203,8 @@ class HtmlTableRenderer extends AbstractRenderer
         $grandTotal = $context['sumAmount'] ?? 'N/A';
 
         $this->appendLine('<tfoot>');
-        $this->appendLine('<tr class=\"summary\">');
-        $this->appendLine('<td colspan="{$this->columnCount}">');
+        $this->appendLine('<tr class="summary">');
+        $this->appendLine('<td colspan="' . $this->columnCount . '">');
         $this->appendLine("<strong>Grand Total: " . htmlspecialchars($grandTotal) . "</strong>");
         $this->appendLine('</td>');
         $this->appendLine('</tr>');
