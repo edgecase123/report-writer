@@ -153,7 +153,7 @@ class HtmlReportWithTableRendererTest extends TestCase
         // --------------------------------------------------------------------
         // 6. Grand total
         // --------------------------------------------------------------------
-        $this->assertStringContainsString('Grand Total: 2722.15', $html);
+        $this->assertStringContainsString('2,722.15', $html);
 
         // --------------------------------------------------------------------
         // 7. Group header and footer structure

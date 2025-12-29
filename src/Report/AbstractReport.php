@@ -37,6 +37,7 @@ abstract class AbstractReport implements ReportInterface
 
     /** @var array<string, array{label:string, format?:string|callable}> */
     private array $columnConfig = [];
+
     public function setRenderer(RendererInterface $renderer): self
     {
         $this->renderer = $renderer;
@@ -161,9 +162,9 @@ abstract class AbstractReport implements ReportInterface
         // Summary and footer
         // Build report-level context
 
-        foreach ($this->reportAggregates as $name => $agg) {
-            $reportContext[$name] = $agg->getValue();
-        }
+        $reportContext = array_map(function ($agg) {
+            return $agg->getValue();
+        }, $this->reportAggregates);
 
         // Count total records
         $totalRecords = 0;
