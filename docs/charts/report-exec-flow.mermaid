@@ -1,0 +1,60 @@
+flowchart TD
+
+    %% Entry point: a concrete Report based on AbstractReport
+    A["Concrete Report<br/>(extends AbstractReport)"] --> B["Configure Report<br/>(groups, bands, etc.)"]
+
+    B --> C["Set Data Provider<br/>DataProviderInterface"]
+    B --> D["Set Renderer<br/>RendererInterface<br/>(e.g. HtmlTableRenderer)"]
+
+    C --> E["Start Report Execution<br/>(e.g. render or run method on AbstractReport)"]
+    D --> E
+
+    %% Core loop inside AbstractReport
+    E --> F["Loop over records from<br/>DataProviderInterface"]
+    F --> G["For each record,<br/>manage grouping via GroupBuilder"]
+
+    %% Band rendering in AbstractReport
+    G --> H{"Which band<br/>must be rendered?"}
+
+    H --> H1["Report Header Band"]
+    H --> H2["Group Header Band"]
+    H --> H3["Detail Band"]
+    H --> H4["Group Footer Band"]
+    H --> H5["Summary/Footer Band"]
+
+    %% Delegation to renderer
+    H1 --> I["AbstractReport::renderBand(type, level, context)"]
+    H2 --> I
+    H3 --> I
+    H4 --> I
+    H5 --> I
+
+    I --> J["RendererInterface::renderBand(type, level, context)"]
+
+    %% Concrete renderer implementation
+    J --> K["HtmlTableRenderer<br/>(extends AbstractRenderer)"]
+
+    K --> K1{"Band type?"}
+
+    K1 --> K1H["Header / Table Open / THead"]
+    K1 --> K1D["Detail Row"]
+    K1 --> K1F["Footers / Summary / Table Close"]
+
+    %% For detail rows with Twig
+    K1D --> L["Resolve record + loop info<br/>into template context"]
+    L --> M["detail.html.twig<br/>rendered by TwigRenderer/Twig"]
+
+    M --> N["HTML row string"]
+    N --> O["AbstractRenderer::append(html)<br/>updates $output"]
+
+    %% Non-detail bands
+    K1H --> O
+    K1F --> O
+
+    %% Final output
+    O --> P["RendererInterface::getOutput()"]
+    P --> Q["Return final report HTML<br/>to caller / test"]
+
+    %% Test usage
+    Q --> R["HtmlReportWithTableRendererTest / SingleLevelGroupingTest"]
+    R --> S["Assert on produced HTML<br/>and band ordering"]

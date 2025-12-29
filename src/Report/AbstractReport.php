@@ -128,10 +128,9 @@ abstract class AbstractReport implements ReportInterface
                     $agg->accumulate($current);
                 }
 
+                // firstRecord already set earlier, assign records and lastRecord
                 $state['records'][] = $current;
                 $state['lastRecord'] = $current;
-                // Note that firstRecord already set above for new groups;
-                // for ongoing groups it was set earlier
             }
 
             // Accumulate into report-level aggregates
@@ -146,6 +145,7 @@ abstract class AbstractReport implements ReportInterface
             $previousGroupKeys = $currentGroupKeys;
 
             $current = $iterator->valid() ? $iterator->current() : null;
+
             if ($iterator->valid()) {
                 $iterator->next();
             }
