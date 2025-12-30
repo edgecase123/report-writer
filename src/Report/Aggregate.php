@@ -28,7 +28,7 @@ class Aggregate
         $this->field = $field;
     }
 
-    public function accumulate($record): void
+    public function accumulate($record): self
     {
         $value = is_callable($this->field)
             ? ($this->field)($record)
@@ -54,6 +54,8 @@ class Aggregate
             default:
                 throw new \InvalidArgumentException("Invalid aggregate type: {$this->type}");
         }
+
+        return $this;
     }
 
     /**

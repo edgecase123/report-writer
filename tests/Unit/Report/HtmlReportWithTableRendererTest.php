@@ -67,9 +67,9 @@ class HtmlReportWithTableRendererTest extends TestCase
 
         $html = $report->render();
 
-        echo "\n--- GENERATED HTML ---\n";
-        echo $html;
-        echo "\n--- END HTML ---\n\n";
+//        echo "\n--- GENERATED HTML ---\n";
+//        echo $html;
+//        echo "\n--- END HTML ---\n\n";
 
         // --------------------------------------------------------------------
         // 1. Basic structure
