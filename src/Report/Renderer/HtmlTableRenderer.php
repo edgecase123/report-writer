@@ -12,14 +12,6 @@ class HtmlTableRenderer extends AbstractRenderer
     private bool $tbodyOpened = false;
     private int $columnCount = 0;
     private array $columnOrder = [];
-    private ?AbstractReport $report = null;
-
-    public function setReport(AbstractReport $report): self
-    {
-        $this->report = $report;
-
-        return $this;
-    }
 
     public function renderBand(string $type, ?int $level, $context): string
     {

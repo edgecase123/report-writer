@@ -2,9 +2,12 @@
 
 namespace ReportWriter\Report\Renderer;
 
+use ReportWriter\Report\AbstractReport;
+
 abstract class AbstractRenderer implements RendererInterface
 {
     protected string $output = '';
+    protected ?AbstractReport $report = null;
 
     abstract public function renderBand(string $type, ?int $level, $context): string;
 
@@ -13,16 +16,23 @@ abstract class AbstractRenderer implements RendererInterface
         return $this->output;
     }
 
-    // === HELPERS ===
-
-    protected function append(string $html): void
+    public function setReport(AbstractReport $report): self
     {
-        $this->output .= $html;
+        $this->report = $report;
+
+        return $this;
     }
 
-    protected function appendLine(string $html = '', int $indent = 0): void
+    // === HELPERS ===
+
+    protected function append(string $data): void
     {
-        $this->output .= str_repeat('  ', $indent) . $html . "\n";
+        $this->output .= $data;
+    }
+
+    protected function appendLine(string $data = '', int $indent = 0): void
+    {
+        $this->output .= str_repeat('  ', $indent) . $data . "\n";
     }
 
     protected function escape($value): string

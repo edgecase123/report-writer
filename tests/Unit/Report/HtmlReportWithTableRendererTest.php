@@ -7,7 +7,7 @@ namespace ReportWriter\Tests\Unit\Report;
 use PHPUnit\Framework\TestCase;
 use ReportWriter\Report\Builder\GroupBuilder;
 use ReportWriter\Report\Data\ArrayDataProvider;
-use ReportWriter\Report\HtmlReport;
+use ReportWriter\Report\Report;
 use ReportWriter\Report\Renderer\HtmlTableRenderer;
 
 
@@ -47,7 +47,7 @@ class HtmlReportWithTableRendererTest extends TestCase
 
         // Create a renderer and report
         $renderer = new HtmlTableRenderer();
-        $report = new HtmlReport($renderer);
+        $report = new Report($renderer);
 
         // Configure grouping and aggregates
         $groupBuilder = (new GroupBuilder('category'))
