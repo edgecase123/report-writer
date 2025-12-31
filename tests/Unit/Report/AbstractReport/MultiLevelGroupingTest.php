@@ -15,7 +15,7 @@ class MultiLevelGroupingTest extends TestCase
 {
     use MockeryPHPUnitIntegration;
 
-    public function test_renders_nested_groups_with_correct_band_order_and_per_level_aggregates(): void
+    public function testRendersNestedGroupsCorrectBandOrderAndPerLevelAggregates(): void
     {
         // Sample data with two grouping levels
         $records = [
@@ -109,7 +109,7 @@ class MultiLevelGroupingTest extends TestCase
         $this->assertEquals(2025, $outerFooters[1]['firstRecord']['year']);
     }
 
-    public function test_group_header_displays_correct_value_when_grouped_by_different_field(): void
+    public function testGroupHeaderDisplaysCorrectValueWhenGroupedByDifferentField(): void
     {
         $records = [
             ['id' => 1, 'department' => 'Sales',    'amount' => 100],

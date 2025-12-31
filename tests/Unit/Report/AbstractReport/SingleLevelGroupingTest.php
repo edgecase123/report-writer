@@ -21,7 +21,7 @@ class SingleLevelGroupingTest extends TestCase
         ['id' => 3, 'category' => 'B', 'amount' => 300],
     ];
 
-    public function test_renders_single_level_grouping_with_correct_band_order_and_context(): void
+    public function testRendersSingleLevelGroupingWithCorrectBandOrderAndContext(): void
     {
         $iterator = new \ArrayIterator(self::SAMPLE_DATA);
 
@@ -81,7 +81,7 @@ class SingleLevelGroupingTest extends TestCase
         $this->assertEquals(1, $rendered[7]['context']['recordCount']);
     }
 
-    public function test_render_includes_sum_aggregate_in_group_footer(): void
+    public function testRenderIncludesSumAggregateInGroupFooter(): void
     {
         $iterator = new \ArrayIterator(self::SAMPLE_DATA);
 
@@ -113,7 +113,7 @@ class SingleLevelGroupingTest extends TestCase
         $this->assertEquals(300.0, $groupBFooter['sumAmount'], "Group B sum incorrect");
     }
 
-    public function test_all_aggregate_types_are_calculated_correctly_in_group_footers(): void
+    public function testAllAggregateTypesAreCalculatedCorrectlyInGroupFooters(): void
     {
         // --------------------------------------------------------------------
         // Prepare data – 5 records in two categories with varying amounts

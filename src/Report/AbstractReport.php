@@ -22,6 +22,9 @@ abstract class AbstractReport implements ReportInterface
     /** @var GroupBuilder[] */
     protected array $groupBuilders = [];
 
+    /** @var int $totalRecords */
+    private int $totalRecords = 0;
+
     /** @var array $groupStack */
     private array $groupStack = [];
 
@@ -41,6 +44,7 @@ abstract class AbstractReport implements ReportInterface
     public function setRenderer(RendererInterface $renderer): self
     {
         $this->renderer = $renderer;
+        $this->renderer->setReport($this);
 
         return $this;
     }
@@ -141,6 +145,7 @@ abstract class AbstractReport implements ReportInterface
 
             // Render detail band
             $output .= $this->renderBand('detail', null, $current);
+            $this->totalRecords++;
 
             // Prepare for the next iteration
             $previousGroupKeys = $currentGroupKeys;
@@ -160,20 +165,11 @@ abstract class AbstractReport implements ReportInterface
         }
 
         // Summary and footer
-        // Build report-level context
-
         $reportContext = array_map(function ($agg) {
             return $agg->getValue();
         }, $this->reportAggregates);
 
-        // Count total records
-        $totalRecords = 0;
-
-        foreach ($this->groupStates as $state) {
-            $totalRecords += count($state['records']);
-        }
-
-        $reportContext['recordCount'] = $totalRecords ?? 0;
+        $reportContext['recordCount'] = $this->totalRecords;
 
         $output .= $this->renderBand('summary', null, $reportContext);
         $output .= $this->renderBand('reportFooter');

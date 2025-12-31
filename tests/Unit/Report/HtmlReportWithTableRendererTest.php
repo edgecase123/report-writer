@@ -7,7 +7,7 @@ namespace ReportWriter\Tests\Unit\Report;
 use PHPUnit\Framework\TestCase;
 use ReportWriter\Report\Builder\GroupBuilder;
 use ReportWriter\Report\Data\ArrayDataProvider;
-use ReportWriter\Report\HtmlReport;
+use ReportWriter\Report\Report;
 use ReportWriter\Report\Renderer\HtmlTableRenderer;
 
 
@@ -40,14 +40,14 @@ class HtmlReportWithTableRendererTest extends TestCase
         ],
     ];
 
-    public function test_renders_full_html_table_with_correct_structure_and_aggregates(): void
+    public function testRendersFullHtmlTableWithCorrectStructureAndAggregates(): void
     {
         // Setup data provider (we'll create a simple ArrayDataProvider)
         $dataProvider = new ArrayDataProvider(self::SAMPLE_DATA);
 
         // Create a renderer and report
         $renderer = new HtmlTableRenderer();
-        $report = new HtmlReport($renderer);
+        $report = new Report($renderer);
 
         // Configure grouping and aggregates
         $groupBuilder = (new GroupBuilder('category'))
