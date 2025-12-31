@@ -40,7 +40,7 @@ class HtmlReportWithTableRendererTest extends TestCase
         ],
     ];
 
-    public function test_renders_full_html_table_with_correct_structure_and_aggregates(): void
+    public function testRendersFullHtmlTableWithCorrectStructureAndAggregates(): void
     {
         // Setup data provider (we'll create a simple ArrayDataProvider)
         $dataProvider = new ArrayDataProvider(self::SAMPLE_DATA);
