@@ -44,6 +44,7 @@ abstract class AbstractReport implements ReportInterface
     public function setRenderer(RendererInterface $renderer): self
     {
         $this->renderer = $renderer;
+        $this->renderer->setReport($this);
 
         return $this;
     }

@@ -9,11 +9,19 @@ class Report extends AbstractReport
 {
     protected ?RendererInterface $renderer;
 
+    public function getGroupBuilders(): array
+    {
+        return $this->groupBuilders;
+    }
+
     public function __construct(
         ?RendererInterface $renderer = null
     ) {
         $this->renderer = $renderer;
-        $this->renderer->setReport($this);
+
+        if ($this->renderer instanceof RendererInterface) {
+            $this->renderer->setReport($this);
+        }
     }
 
     protected function renderBand(string $type, ?int $level = null, $context = null): string

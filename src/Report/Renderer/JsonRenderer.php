@@ -91,13 +91,6 @@ class JsonRenderer extends AbstractRenderer
             'subgroups'  => [], // always initialize for consistency
         ];
 
-        // Copy any calculated aggregates from context
-        foreach ($context as $key => $value) {
-            if (!in_array($key, ['groupValue', 'firstRecord', 'lastRecord', 'recordCount'], true)) {
-                $groupNode['aggregates'][$key] = $value;
-            }
-        }
-
         // Place the new group in the correct parent
         if ($level === 0) {
             // Top-level group
@@ -149,6 +142,19 @@ class JsonRenderer extends AbstractRenderer
 
     private function renderGroupFooter(int $level, array $context): void
     {
+        // Find the group node on the stack
+        $groupNode =& $this->groupStack[$level];
+
+        // Now populate aggregates with final values
+        foreach ($context as $key => $value) {
+            if (!in_array($key, ['groupValue', 'firstRecord', 'lastRecord', 'recordCount', 'rows'], true)) {
+                $groupNode['aggregates'][$key] = $value;
+            }
+        }
+
+        // Optionally add recordCount or other metadata
+        $groupNode['recordCount'] = $context['recordCount'] ?? 0;
+
         // Aggregates were already added in the header via context
         // Just remove this level from the stack
         unset($this->groupStack[$level]);
