@@ -7,15 +7,6 @@ namespace ReportWriter\Report\Renderer;
 use ReportWriter\Report\AbstractReport;
 use DateTimeImmutable;
 
-/**
- * Renderer that outputs the full report as structured JSON.
- *
- * The structure is hierarchical and mirrors the banded report logic:
- * - Top-level metadata
- * - Column definitions (label + optional format)
- * - Nested groups (with header value, aggregates, subgroups, rows)
- * - Grand summary
- */
 class JsonRenderer extends AbstractRenderer
 {
     private array $result = [
@@ -58,7 +49,7 @@ class JsonRenderer extends AbstractRenderer
                 break;
 
             case 'reportFooter':
-                // Nothing specific needed for JSON
+                // Nothing needed for JSON
                 break;
         }
 
@@ -77,10 +68,8 @@ class JsonRenderer extends AbstractRenderer
     {
         $this->result['metadata'] = [
             'generatedAt' => (new DateTimeImmutable())->format(DATE_ATOM),
-            // You can extend this with title, parameters, etc.
         ];
 
-        // Build column definitions once
         if ($this->report && $this->report->hasConfiguredColumns()) {
             foreach ($this->report->getColumnOrder() as $field) {
                 $this->result['columns'][] = [
@@ -99,25 +88,27 @@ class JsonRenderer extends AbstractRenderer
             'value'      => $context['groupValue'] ?? null,
             'aggregates' => [],
             'rows'       => [],
+            'subgroups'  => [], // always initialize for consistency
         ];
 
-        // Extract aggregates / calculations for this group
+        // Copy any calculated aggregates from context
         foreach ($context as $key => $value) {
-            if ($key !== 'groupValue' && $key !== 'firstRecord' && $key !== 'lastRecord' && $key !== 'recordCount') {
+            if (!in_array($key, ['groupValue', 'firstRecord', 'lastRecord', 'recordCount'], true)) {
                 $groupNode['aggregates'][$key] = $value;
             }
         }
 
-        // Nested placement
+        // Place the new group in the correct parent
         if ($level === 0) {
-            $this->result['groups'][] = &$groupNode;
+            // Top-level group
+            $this->result['groups'][] =& $groupNode;
         } else {
-            // Find parent group (previous level on stack)
+            // Nested inside previous level
             $parent =& $this->groupStack[$level - 1];
-            $parent['subgroups'] ??= [];
-            $parent['subgroups'][] = &$groupNode;
+            $parent['subgroups'][] =& $groupNode;
         }
 
+        // Push onto stack so detail rows know where to go
         $this->groupStack[$level] =& $groupNode;
     }
 
@@ -133,26 +124,33 @@ class JsonRenderer extends AbstractRenderer
                 $formattedRow[$field] = $this->formatValue($raw, $format);
             }
         } else {
-            // Fallback: raw record
             $formattedRow = $record;
         }
 
-        // === CRITICAL FIX: Handle both grouped and ungrouped cases ===
+        // Ensure we always have a current group to attach rows to
+        if (empty($this->groupStack)) {
+            // No explicit grouping → create an implicit level-0 group on first detail
+            $implicitGroup = [
+                'level'      => 0,
+                'value'      => null,          // no grouping value
+                'aggregates' => [],
+                'rows'       => [],
+                'subgroups'  => [],
+            ];
 
-        if (!empty($this->groupStack)) {
-            // We are inside one or more groups → add to the deepest (current) group
-            $currentGroup =& $this->groupStack[count($this->groupStack) - 1];
-            $currentGroup['rows'][] = $formattedRow;
-        } else {
-            // No groups at all → treat top-level 'groups' as flat list of rows
-            $this->result['groups'][] = $formattedRow;
+            $this->result['groups'][] =& $implicitGroup;
+            $this->groupStack[0] =& $implicitGroup;
         }
+
+        // Now add the row to the deepest (current) group
+        $currentGroup =& $this->groupStack[count($this->groupStack) - 1];
+        $currentGroup['rows'][] = $formattedRow;
     }
 
     private function renderGroupFooter(int $level, array $context): void
     {
-        // Aggregates already added in groupHeader via context.
-        // Here we just clean up the stack.
+        // Aggregates were already added in the header via context
+        // Just remove this level from the stack
         unset($this->groupStack[$level]);
     }
 

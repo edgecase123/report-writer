@@ -79,10 +79,16 @@ class JsonRendererTest extends TestCase
         // --- Rows (no grouping in this test, so rows are directly under "groups") ---
         $this->assertArrayHasKey('groups', $data);
         $this->assertIsArray($data['groups']);
-        $this->assertCount(3, $data['groups']); // three detail rows
 
-        // Spot-check the first row – amount should be formatted as currency
-        $firstRow = $data['groups'][0];
+        // --- Rows (no grouping → one implicit level-0 group) ---
+        $this->assertCount(1, $data['groups']);
+        $this->assertSame(0, $data['groups'][0]['level']);
+        $this->assertNull($data['groups'][0]['value']);
+        $this->assertCount(3, $data['groups'][0]['rows']);
+
+        // Spot-check the first row
+        $firstRow = $data['groups'][0]['rows'][0];
+
         $this->assertSame('1', $firstRow['id']);               // string because formatValue returns string for display
         $this->assertSame('Alice', $firstRow['name']);
         $this->assertSame('$100.50', $firstRow['amount']);     // currency format applied
