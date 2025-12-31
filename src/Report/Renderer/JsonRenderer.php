@@ -4,8 +4,8 @@ declare(strict_types=1);
 
 namespace ReportWriter\Report\Renderer;
 
-use ReportWriter\Report\AbstractReport;
 use DateTimeImmutable;
+use ReportWriter\Report\AbstractReport;
 
 class JsonRenderer extends AbstractRenderer
 {

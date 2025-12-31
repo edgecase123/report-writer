@@ -2,7 +2,6 @@
 
 namespace ReportWriter\Report;
 
-use ReportWriter\Report\Renderer\HtmlTableRenderer;
 use ReportWriter\Report\Renderer\RendererInterface;
 
 class Report extends AbstractReport

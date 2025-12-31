@@ -1,0 +1,105 @@
+classDiagram
+    direction TB
+
+%% Core reporting interfaces / base
+    class ReportInterface {
+        <<interface>>
+        +setRenderer(RendererInterface): self
+        +setDataProvider(DataProviderInterface): self
+        +setColumns(array): self
+        +render(): string
+    }
+
+    class AbstractReport {
+        <<abstract>>
+        -DataProviderInterface dataProvider
+        -array columns
+        -array groupBuilders
+        +setDataProvider(DataProviderInterface): self
+        +setColumns(array): self
+        +getGroupBuilders(): array
+        +render(): void
+        #renderBand(type string, level ?int, context mixed): string
+    }
+
+    ReportInterface <|.. AbstractReport
+
+    class Report {
+        -RendererInterface renderer
+        +__construct(?RendererInterface renderer)
+        +getGroupBuilders(): array
+        #renderBand(type string, level ?int, context mixed): string
+        +render(): string
+    }
+
+    AbstractReport <|-- Report
+
+%% Data provider
+    class DataProviderInterface {
+        <<interface>>
+        +getRecords(): \Iterator
+    }
+
+    AbstractReport --> DataProviderInterface : uses
+
+%% Renderer side
+    class RendererInterface {
+        <<interface>>
+        +setReport(ReportInterface): void
+        +renderBand(type string, level ?int, context array): string
+        +getOutput(): string
+    }
+
+    class HtmlTableRenderer {
+    }
+    class JsonRenderer {
+        -string output
+        +getOutput(): string
+    }
+
+    RendererInterface <|.. HtmlTableRenderer
+    RendererInterface <|.. JsonRenderer
+
+    Report --> RendererInterface : holds
+    RendererInterface --> ReportInterface : setReport()
+
+%% Builder / fluent API
+    class ReportBuilder {
+        -Report report
+        +__construct(Report report)
+        +groupBy(field string): self
+        +sum(field string, alias string): self
+        +calculate(field string, callback): self
+        +build(): Report
+    }
+
+    ReportBuilder --> Report : configures
+    Report --> "0..*" GroupBuilder : groupBuilders
+
+    class GroupBuilder {
+        -string field
+        -array aggregations
+        -array calculations
+    }
+
+%% Tests
+    class TestCase {
+    <<TestCase>>
+    }
+
+    class AbstractTestReport {
+    <<double>>
+    }
+
+    class AbstractReportTest {
+    +testRender(): void
+    +testGroupLevelCalculationReceivesFinalAggregateValues(): void
+    }
+
+TestCase <|-- AbstractReportTest
+AbstractReport <|-- AbstractTestReport
+AbstractReportTest --> AbstractTestReport : instantiates
+AbstractReportTest --> Report : instantiates
+AbstractReportTest --> ReportBuilder : instantiates
+AbstractReportTest --> DataProviderInterface : mocks
+AbstractReportTest --> JsonRenderer : instantiates

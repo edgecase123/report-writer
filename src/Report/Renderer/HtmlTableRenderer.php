@@ -2,8 +2,6 @@
 
 namespace ReportWriter\Report\Renderer;
 
-use ReportWriter\Report\AbstractReport;
-
 class HtmlTableRenderer extends AbstractRenderer
 {
     private array $columnKeys = [];
