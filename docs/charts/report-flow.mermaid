@@ -1,0 +1,53 @@
+flowchart TD
+
+%% Entry points
+    A["Test code"] --> B["Create DataProvider mock<br/>(getRecords -> Iterator)"]
+    A --> C["Create JsonRenderer"]
+    A --> D["Create Report instance"]
+
+%% Report setup
+    B --> D
+    C --> D
+    D --> E["setRenderer(JsonRenderer)"]
+    D --> F["setDataProvider(DataProvider)"]
+    D --> G["setColumns(...)"]
+
+%% Builder configuration
+    A --> H["Create ReportBuilder(report)"]
+    H --> I["groupBy('category')"]
+    I --> J["sum('amount', 'totalAmount')"]
+    J --> K["calculate('bonus', fn(groupState) {...})"]
+    K --> L["build()"]
+
+%% Render flow
+    A --> M["report->render()"]
+
+    M --> N["DataProvider->getRecords()<br/>returns Iterator"]
+    N --> O{"Iterator has records?"}
+
+    O -->|No| P["Render empty/headers<br/>(if any) -> return"]
+    O -->|Yes| Q["Process records loop"]
+
+%% Inside records loop (simplified)
+    Q --> R["Handle group boundaries<br/>(open/close groups)<br/>update groupStates"]
+    R --> S["Update aggregates on groups<br/>(e.g. totalAmount)"]
+    S --> T["Apply calculations<br/>(e.g. bonus using totalAmount)"]
+    T --> U["Call Renderer->renderBand('detail', ...)"]
+
+%% Renderer side
+    E --> V["JsonRenderer->setReport(report)"]
+    M --> W["Renderer->renderBand('reportHeader', null, context)"]
+    Q --> X["Renderer->renderBand('groupHeader', level, context)"]
+    Q --> Y["Renderer->renderBand('groupFooter', level, context)"]
+    M --> Z["Renderer->renderBand('summary', null, context)"]
+
+%% JSON renderer internals
+    W --> W1["renderReportHeader()<br/>set metadata & columns"]
+    X --> X1["renderGroupHeader()<br/>push group into result.groups<br/>manage groupStack"]
+    U --> U1["renderDetail()<br/>append row data to current group"]
+    Y --> Y1["renderGroupFooter()<br/>attach aggregates to group"]
+    Z --> Z1["renderSummary()<br/>set result.summary"]
+
+%% Final output
+    A --> O1["jsonRenderer->getOutput()"]
+    O1 --> O2["json_encode(result)<br/>-> JSON string"]

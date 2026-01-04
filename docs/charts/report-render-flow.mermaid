@@ -1,0 +1,44 @@
+flowchart TD
+    A["Start render()"] --> B["Get iterator from DataProvider<br/>dataProvider.getRecords()"]
+    B --> C{"Iterator has current record?"}
+    C -- No --> Z["Return empty report?"]
+    C -- Yes --> D["Set current = iterator.current()<br/>iterator.next()"]
+
+    D --> E["Render report header<br/>renderBand('reportHeader')"]
+    E --> F["previousGroupKeys = []"]
+
+    F --> G{"current != null?"}
+
+    G -- Yes --> H["Compute group keys<br/>computeGroupKeys(current)"]
+    H --> I["Find break level<br/>findGroupBreakLevel(previousGroupKeys,<br/>currentGroupKeys)"]
+
+    I --> J{"breakLevel != null AND<br/>previousGroupKeys not empty?"}
+    J -- Yes --> K["For each level from inner to breakLevel:<br/>buildGroupContext(prevKey)<br/>renderBand('groupFooter', level, ctx)"]
+    J -- No --> L["Skip closing group footers"]
+
+    K --> M
+    L --> M{"breakLevel != null?"}
+
+    M -- Yes --> N["For each level from breakLevel to deepest:<br/>build fullKey from currentGroupKeys<br/>initializeGroupState(level, fullKey)<br/>groupStates[fullKey].firstRecord = current<br/>buildGroupContext(fullKey)<br/>renderBand('groupHeader', level, ctx)"]
+    M -- No --> O["Skip opening group headers"]
+
+    N --> P
+    O --> P["Update groupStack = currentGroupKeys"]
+
+    P --> Q["For each active groupState:<br/>for each aggregate: accumulate(current)<br/>append current to records[]<br/>set lastRecord = current"]
+
+    Q --> R["For each reportAggregate:<br/>accumulate(current)"]
+
+    R --> S["Render detail band<br/>renderBand('detail', null, current)"]
+    S --> T["totalRecords++"]
+    T --> U["previousGroupKeys = currentGroupKeys"]
+
+    U --> V["Advance iterator:<br/>current = iterator.current() or null<br/>iterator.next() if valid"]
+    V --> G
+
+    G -- No --> W["For each level from inner to outer:<br/>buildGroupContext(fullKey)<br/>renderBand('groupFooter', level, ctx)"]
+
+    W --> X["Build reportContext from reportAggregates<br/>+ recordCount"]
+    X --> Y["renderBand('summary', null, reportContext)"]
+    Y --> AA["renderBand('reportFooter')"]
+    AA --> AB["Return final output string"]
