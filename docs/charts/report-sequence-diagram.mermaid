@@ -1,0 +1,87 @@
+sequenceDiagram
+    participant C as Client
+    participant R as Report (AbstractReport)
+    participant DP as DataProvider
+    participant It as Record Iterator
+    participant Ren as Renderer
+    participant Agg as Aggregates
+
+    C->>R: setRenderer(Ren)
+    C->>R: setDataProvider(DP)
+    C->>R: setGroups(groupBuilders)
+    C->>R: render()
+
+    activate R
+    R->>DP: getRecords()
+    DP-->>R: It (iterator)
+    R->>It: current()
+    It-->>R: first record or null
+    R->>It: next()
+
+    R->>Ren: renderBand("reportHeader", null, context)
+    activate Ren
+    Ren-->>R: ""
+    deactivate Ren
+
+    loop for each record
+        R->>R: computeGroupKeys(record)
+        R->>R: findGroupBreakLevel(prevKeys, currKeys)
+
+        alt group break with previous groups
+            loop close affected groups (inner to break level)
+                R->>R: buildGroupContext(prevGroupKey)
+                R->>Ren: renderBand("groupFooter", level, ctx)
+                activate Ren
+                Ren-->>R: ""
+                deactivate Ren
+            end
+        end
+
+        alt group break (including first record)
+            loop open new groups (break level to deepest)
+                R->>R: initializeGroupState(level, fullKey)
+                R->>R: buildGroupContext(fullKey)
+                R->>Ren: renderBand("groupHeader", level, ctx)
+                activate Ren
+                Ren-->>R: ""
+                deactivate Ren
+            end
+        end
+
+        R->>Agg: accumulate(record) on all group aggregates
+        R->>Agg: accumulate(record) on report aggregates
+
+        R->>Ren: renderBand("detail", null, record)
+        activate Ren
+        Ren-->>R: ""
+        deactivate Ren
+
+        R->>It: current() / next()
+        It-->>R: next record or null
+    end
+
+    note over R: End of records
+
+    loop close all remaining groups (inner to outer)
+        R->>R: buildGroupContext(fullKey)
+        R->>Ren: renderBand("groupFooter", level, ctx)
+        activate Ren
+        Ren-->>R: ""
+        deactivate Ren
+    end
+
+    R->>Agg: getValue() for each report aggregate
+    R->>R: build reportContext (aggregates + recordCount)
+
+    R->>Ren: renderBand("summary", null, reportContext)
+    activate Ren
+    Ren-->>R: ""
+    deactivate Ren
+
+    R->>Ren: renderBand("reportFooter", null, context)
+    activate Ren
+    Ren-->>R: ""
+    deactivate Ren
+
+    R-->>C: final rendered output (string)
+    deactivate R
