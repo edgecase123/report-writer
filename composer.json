@@ -1,5 +1,5 @@
 {
-  "name": "jenkowitz/report-writer",
+  "name": "edgecase/report-writer",
   "description": "A banded report writer for PHP applications with fluent group aggregates",
   "type": "library",
   "license": "proprietary",
