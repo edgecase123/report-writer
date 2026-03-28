@@ -1,0 +1,123 @@
+{
+  "schema_version": "1.0",
+  "report_instance_id": "rep_sub_001",
+  "report_definition_id": "invoice",
+  "band_instances": [
+    {
+      "instance_id": "b1",
+      "band_id": "detail",
+      "band_type": "detail",
+      "parent_container_type": "root",
+      "elements": [
+        {
+          "instance_id": "e1",
+          "element_id": "customer_name",
+          "kind": "text",
+          "x": 0,
+          "y": 0,
+          "width": 300,
+          "height": 20,
+          "can_grow": false,
+          "can_shrink": false,
+          "content": {
+            "content_type": "text",
+            "value": "Acme Corp"
+          }
+        },
+        {
+          "instance_id": "e2",
+          "element_id": "line_items_subreport",
+          "kind": "subreport",
+          "x": 0,
+          "y": 30,
+          "width": 500,
+          "height": 10,
+          "can_grow": true,
+          "can_shrink": false,
+          "content": {
+            "content_type": "subreport",
+            "subreport_instance_id": "sub_1",
+            "stretch_with_overflow": true,
+            "can_split_across_pages": true
+          }
+        }
+      ],
+      "x": 0,
+      "y": 0,
+      "width": 500,
+      "height": 40,
+      "can_grow": true,
+      "split_behavior": "allowed"
+    }
+  ],
+  "subreport_instances": [
+    {
+      "subreport_instance_id": "sub_1",
+      "report_definition_id": "line_items",
+      "band_instances": [
+        {
+          "instance_id": "sb1",
+          "band_id": "detail",
+          "band_type": "detail",
+          "parent_container_type": "subreport",
+          "parent_container_id": "sub_1",
+          "elements": [
+            {
+              "instance_id": "se1",
+              "element_id": "item_name",
+              "kind": "text",
+              "x": 0,
+              "y": 0,
+              "width": 300,
+              "height": 20,
+              "can_grow": false,
+              "can_shrink": false,
+              "content": {
+                "content_type": "text",
+                "value": "Widget A"
+              }
+            }
+          ],
+          "x": 0,
+          "y": 0,
+          "width": 500,
+          "height": 20,
+          "can_grow": false,
+          "split_behavior": "allowed"
+        },
+        {
+          "instance_id": "sb2",
+          "band_id": "detail",
+          "band_type": "detail",
+          "parent_container_type": "subreport",
+          "parent_container_id": "sub_1",
+          "elements": [
+            {
+              "instance_id": "se2",
+              "element_id": "item_name",
+              "kind": "text",
+              "x": 0,
+              "y": 0,
+              "width": 300,
+              "height": 20,
+              "can_grow": false,
+              "can_shrink": false,
+              "content": {
+                "content_type": "text",
+                "value": "Widget B"
+              }
+            }
+          ],
+          "x": 0,
+          "y": 0,
+          "width": 500,
+          "height": 20,
+          "can_grow": false,
+          "split_behavior": "allowed"
+        }
+      ],
+      "parameters": {}
+    }
+  ],
+  "metadata": {}
+}

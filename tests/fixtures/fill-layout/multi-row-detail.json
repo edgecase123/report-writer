@@ -1,0 +1,96 @@
+{
+  "schema_version": "1.0",
+  "report_instance_id": "rep_multi_001",
+  "report_definition_id": "customer_list",
+  "band_instances": [
+    {
+      "instance_id": "b1",
+      "band_id": "detail",
+      "band_type": "detail",
+      "parent_container_type": "root",
+      "elements": [
+        {
+          "instance_id": "e1",
+          "element_id": "name",
+          "kind": "text",
+          "x": 0,
+          "y": 0,
+          "width": 200,
+          "height": 20,
+          "can_grow": false,
+          "can_shrink": false,
+          "content": {
+            "content_type": "text",
+            "value": "Acme Corp"
+          }
+        }
+      ],
+      "x": 0,
+      "y": 0,
+      "width": 500,
+      "height": 20,
+      "can_grow": false,
+      "split_behavior": "allowed"
+    },
+    {
+      "instance_id": "b2",
+      "band_id": "detail",
+      "band_type": "detail",
+      "parent_container_type": "root",
+      "elements": [
+        {
+          "instance_id": "e2",
+          "element_id": "name",
+          "kind": "text",
+          "x": 0,
+          "y": 0,
+          "width": 200,
+          "height": 20,
+          "can_grow": false,
+          "can_shrink": false,
+          "content": {
+            "content_type": "text",
+            "value": "Globex Inc"
+          }
+        }
+      ],
+      "x": 0,
+      "y": 0,
+      "width": 500,
+      "height": 20,
+      "can_grow": false,
+      "split_behavior": "allowed"
+    },
+    {
+      "instance_id": "b3",
+      "band_id": "detail",
+      "band_type": "detail",
+      "parent_container_type": "root",
+      "elements": [
+        {
+          "instance_id": "e3",
+          "element_id": "name",
+          "kind": "text",
+          "x": 0,
+          "y": 0,
+          "width": 200,
+          "height": 20,
+          "can_grow": false,
+          "can_shrink": false,
+          "content": {
+            "content_type": "text",
+            "value": "Soylent Corp"
+          }
+        }
+      ],
+      "x": 0,
+      "y": 0,
+      "width": 500,
+      "height": 20,
+      "can_grow": false,
+      "split_behavior": "allowed"
+    }
+  ],
+  "subreport_instances": [],
+  "metadata": {}
+}

@@ -1,0 +1,106 @@
+{
+  "layout_schema_version": "1.0",
+  "source_report_instance_id": "rep_sub_001",
+  "page_width": 500,
+  "page_height": 800,
+  "pages": [
+    {
+      "page_number": 1,
+      "bands": [
+        {
+          "instance_id": "b1",
+          "band_id": "detail",
+          "band_type": "detail",
+          "source_container_type": "root",
+          "source_container_id": null,
+          "absolute_x": 0,
+          "absolute_y": 0,
+          "width": 500,
+          "height": 40,
+          "elements": [
+            {
+              "instance_id": "e1",
+              "element_id": "customer_name",
+              "kind": "text",
+              "absolute_x": 0,
+              "absolute_y": 0,
+              "width": 300,
+              "height": 20,
+              "content": {
+                "content_type": "text",
+                "value": "Acme Corp"
+              }
+            },
+            {
+              "instance_id": "e2",
+              "element_id": "line_items_subreport",
+              "kind": "subreport",
+              "absolute_x": 0,
+              "absolute_y": 30,
+              "width": 500,
+              "height": 10,
+              "content": {
+                "content_type": "subreport",
+                "subreport_instance_id": "sub_1",
+                "stretch_with_overflow": true,
+                "can_split_across_pages": true
+              }
+            }
+          ]
+        },
+        {
+          "instance_id": "sb1",
+          "band_id": "detail",
+          "band_type": "detail",
+          "source_container_type": "subreport",
+          "source_container_id": "sub_1",
+          "absolute_x": 0,
+          "absolute_y": 30,
+          "width": 500,
+          "height": 20,
+          "elements": [
+            {
+              "instance_id": "se1",
+              "element_id": "item_name",
+              "kind": "text",
+              "absolute_x": 0,
+              "absolute_y": 30,
+              "width": 300,
+              "height": 20,
+              "content": {
+                "content_type": "text",
+                "value": "Widget A"
+              }
+            }
+          ]
+        },
+        {
+          "instance_id": "sb2",
+          "band_id": "detail",
+          "band_type": "detail",
+          "source_container_type": "subreport",
+          "source_container_id": "sub_1",
+          "absolute_x": 0,
+          "absolute_y": 50,
+          "width": 500,
+          "height": 20,
+          "elements": [
+            {
+              "instance_id": "se2",
+              "element_id": "item_name",
+              "kind": "text",
+              "absolute_x": 0,
+              "absolute_y": 50,
+              "width": 300,
+              "height": 20,
+              "content": {
+                "content_type": "text",
+                "value": "Widget B"
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
