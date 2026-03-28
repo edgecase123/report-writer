@@ -1,0 +1,14 @@
+[
+  {
+    "customer_name": "Acme Corp",
+    "amount": "42.00"
+  },
+  {
+    "customer_name": "Globex",
+    "amount": "99.50"
+  },
+  {
+    "customer_name": "Initech",
+    "amount": "12.75"
+  }
+]

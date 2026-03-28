@@ -1,0 +1,30 @@
+{
+  "report_id": "sales_by_customer",
+  "bands": [
+    {
+      "band_id": "detail",
+      "band_type": "detail",
+      "height": 20,
+      "elements": [
+        {
+          "element_id": "customer_name",
+          "element_type": "text",
+          "x": 0,
+          "y": 0,
+          "width": 200,
+          "height": 20,
+          "expression": "customer_name"
+        },
+        {
+          "element_id": "amount",
+          "element_type": "text",
+          "x": 210,
+          "y": 0,
+          "width": 100,
+          "height": 20,
+          "expression": "amount"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+{
+  "schema_version": "1.0.0",
+  "report_instance_id": "report_test_1",
+  "report_definition_id": "test_report",
+  "generated_at": "2026-03-28T00:00:00Z",
+
+  "document_metadata": {
+    "page_width": 100,
+    "page_height": 100,
+    "margin_top": 0,
+    "margin_right": 0,
+    "margin_bottom": 0,
+    "margin_left": 0
+  },
+
+  "parameters": {},
+
+  "band_instances": [],
+
+  "subreport_instances": []
+}

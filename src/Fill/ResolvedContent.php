@@ -6,10 +6,15 @@ namespace ReportWriter\Fill;
 
 final class ResolvedContent
 {
+    private string $contentType;
+    private string $value;
+
     public function __construct(
-        private readonly string $contentType,
-        private readonly string $value
+        string $contentType,
+        string $value
     ) {
+        $this->value = $value;
+        $this->contentType = $contentType;
     }
 
     public function getContentType(): string

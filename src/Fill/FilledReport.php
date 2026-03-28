@@ -6,10 +6,15 @@ namespace ReportWriter\Fill;
 
 final class FilledReport
 {
+    private string $reportDefinitionId;
+    private array $bandInstances;
+
     public function __construct(
-        private string $reportDefinitionId,
-        private array $bandInstances,
+        string $reportDefinitionId,
+        array $bandInstances,
     ) {
+        $this->bandInstances = $bandInstances;
+        $this->reportDefinitionId = $reportDefinitionId;
     }
 
     public function getReportDefinitionId(): string

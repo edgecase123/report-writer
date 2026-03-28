@@ -1,0 +1,27 @@
+{
+  "schema_version": "1.0.0",
+  "report_instance_id": "report_invoice_001",
+  "report_definition_id": "invoice",
+  "generated_at": "2026-03-28T12:00:00Z",
+
+  "document_metadata": {
+    "title": "Invoice",
+    "page_width": 595,
+    "page_height": 842,
+    "margin_top": 36,
+    "margin_right": 36,
+    "margin_bottom": 36,
+    "margin_left": 36,
+    "locale": "en-US",
+    "currency": "USD"
+  },
+
+  "parameters": {
+    "invoice_id": 10045,
+    "show_line_item_notes": true
+  },
+
+  "band_instances": [],
+
+  "subreport_instances": []
+}

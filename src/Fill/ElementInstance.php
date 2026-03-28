@@ -6,16 +6,33 @@ namespace ReportWriter\Fill;
 
 final class ElementInstance
 {
+    private string $instanceId;
+    private string $elementId;
+    private string $kind;
+    private int $x;
+    private int $y;
+    private int $width;
+    private int $height;
+    private ResolvedContent $content;
+
     public function __construct(
-        private string $instanceId,
-        private string $elementId,
-        private string $kind,
-        private int $x,
-        private int $y,
-        private int $width,
-        private int $height,
-        private ResolvedContent $content,
+        string $instanceId,
+        string $elementId,
+        string $kind,
+        int $x,
+        int $y,
+        int $width,
+        int $height,
+        ResolvedContent $content,
     ) {
+        $this->content = $content;
+        $this->height = $height;
+        $this->width = $width;
+        $this->y = $y;
+        $this->x = $x;
+        $this->kind = $kind;
+        $this->elementId = $elementId;
+        $this->instanceId = $instanceId;
     }
 
     public function getInstanceId(): string

@@ -11,8 +11,8 @@ final class BandDefinition
      */
     public function __construct(
         private readonly string $id,
-        private readonly string $type,
-        private readonly array  $elements,
+        private ?string $type = null,
+        private array  $elements = [],
     ) {
 
     }
@@ -27,8 +27,29 @@ final class BandDefinition
         return $this->type;
     }
 
+    public function setType(string $type): void
+    {
+        $this->type = $type;
+    }
+
     public function getElements(): array
     {
         return $this->elements;
+    }
+
+    public function setElements(array $elements): self
+    {
+        $this->elements = $elements;
+        return $this;
+    }
+
+    public function addElement(ElementDefinition $element): void
+    {
+        $this->elements[] = $element;
+    }
+
+    public function getElement(string $id): ElementDefinition
+    {
+        return $this->elements[$id];
     }
 }

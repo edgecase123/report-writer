@@ -6,12 +6,21 @@ namespace ReportWriter\Fill;
 
 final class BandInstance
 {
+    private string $instanceId;
+    private string $bandId;
+    private string $bandType;
+    private array $elementInstances;
+
     public function __construct(
-        private string $instanceId,
-        private string $bandId,
-        private string $bandType,
-        private array $elementInstances,
+        string $instanceId,
+        string $bandId,
+        string $bandType,
+        array $elementInstances,
     ) {
+        $this->elementInstances = $elementInstances;
+        $this->bandType = $bandType;
+        $this->bandId = $bandId;
+        $this->instanceId = $instanceId;
     }
 
     public function getInstanceId(): string
