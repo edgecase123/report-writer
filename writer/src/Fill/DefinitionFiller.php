@@ -45,12 +45,13 @@ class DefinitionFiller implements ReportFillerInterface
      * Callbacks chain: each receives the output of the previous. If any returns null
      * the band is suppressed and remaining callbacks are skipped.
      *
+     * This method mutates $this — it is NOT fluent. Call it and discard the return.
+     *
      * @param callable(BandInstance, BandContext): ?BandInstance $callback
      */
-    public function onBand(string $bandId, callable $callback): self
+    public function onBand(string $bandId, callable $callback): void
     {
         $this->bandCallbacks[$bandId][] = $callback;
-        return $this;
     }
 
     public function fill(array $params): ReportInstance
