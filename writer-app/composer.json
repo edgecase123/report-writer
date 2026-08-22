@@ -1,0 +1,38 @@
+{
+    "name": "edgecase123/report-writer-app",
+    "description": "Slim 4 demo host for edgecase123/report-writer — dev/test/demo scaffolding per ADR-013.",
+    "type": "project",
+    "license": "proprietary",
+    "require": {
+        "php": ">=7.4",
+        "ext-pdo": "*",
+        "ext-pdo_sqlite": "*",
+        "edgecase123/report-writer": "@dev",
+        "slim/slim": "^4.14",
+        "slim/psr7": "^1.6"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.5"
+    },
+    "repositories": [
+        {
+            "type": "path",
+            "url": "../writer",
+            "options": {
+                "symlink": true
+            }
+        }
+    ],
+    "autoload": {
+        "psr-4": {
+            "ReportWriter\\App\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "ReportWriter\\App\\Tests\\": "tests/"
+        }
+    },
+    "minimum-stability": "dev",
+    "prefer-stable": true
+}
