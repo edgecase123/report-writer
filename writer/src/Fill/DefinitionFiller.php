@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace foreup\Reporting\Fill;
 
+use foreup\Reporting\Expression\AggregateFunction;
 use foreup\Reporting\Instance\BandInstance;
 use foreup\Reporting\Instance\Content\TextContent;
 use foreup\Reporting\Instance\ElementInstance;
@@ -274,19 +275,7 @@ class DefinitionFiller implements ReportFillerInterface
 
     private function computeAggregate(array $rows, string $field, string $fn): float
     {
-        $values = array_map(fn ($row) => (float) ($row[$field] ?? 0), $rows);
-
-        if (empty($values)) {
-            return 0.0;
-        }
-
-        switch ($fn) {
-            case 'count': return (float) count($values);
-            case 'avg':   return array_sum($values) / count($values);
-            case 'min':   return (float) min($values);
-            case 'max':   return (float) max($values);
-            default:      return (float) array_sum($values); // sum
-        }
+        return AggregateFunction::apply($fn, $rows, $field);
     }
 
     private function interpolate(string $template, array $params): string

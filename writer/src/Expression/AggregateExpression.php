@@ -39,16 +39,6 @@ final class AggregateExpression implements ContentExpression
 
     private function compute(array $rows): float
     {
-        if (empty($rows)) {
-            return 0.0;
-        }
-        $values = array_map(fn($r) => (float) ($r[$this->field] ?? 0), $rows);
-        switch ($this->fn) {
-            case 'avg':   return array_sum($values) / count($values);
-            case 'min':   return (float) min($values);
-            case 'max':   return (float) max($values);
-            case 'count': return (float) count($values);
-            default:      return array_sum($values); // sum
-        }
+        return AggregateFunction::apply($this->fn, $rows, $this->field);
     }
 }
