@@ -1,5 +1,6 @@
 # TICKET-001: Consolidate aggregate math (DefinitionFiller ↔ AggregateExpression)
 
+**Status:** ✅ Closed (2026-08-22, commit `28827a1`, A1 plan Task 1)
 **Priority:** High
 **Source:** dry-solid-reviewer audit (2026-08-22) — 🔴 DRY + 🔴 OCP
 **Scope:** `writer/src/Fill/DefinitionFiller.php`, `writer/src/Expression/AggregateExpression.php`

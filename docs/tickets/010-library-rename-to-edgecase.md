@@ -1,5 +1,6 @@
 # TICKET-010: Rename library from `foreup/reporting` → `edgecase123/report-writer`
 
+**Status:** ✅ Closed (2026-08-22, commits `2342466` + `e08f1aa`, A1 plan Tasks 4/5/6) — composer.json + all PHP source + README updated
 **Priority:** Medium
 **Source:** session-design (2026-08-22) — foreUP-neutralisation decision
 **Scope:** `writer/composer.json`, every file under `writer/src/**/*.php` and `writer/tests/**/*.php`

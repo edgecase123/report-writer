@@ -1,5 +1,6 @@
 # TICKET-006: Fix `DefinitionFiller::onBand` fluent-returns-but-mutates
 
+**Status:** ✅ Closed (2026-08-22, commit `5c38057`, A1 plan Task 2) — resolved via Option A (drop fluent return, signature is now `void`)
 **Priority:** Medium
 **Source:** dry-solid-reviewer audit (2026-08-22) — 🟡 Builder immutability breach
 **Scope:** `writer/src/Fill/DefinitionFiller.php:48-52`

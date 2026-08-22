@@ -1,5 +1,6 @@
 # TICKET-002: Delete dead code — `Interfaces/DataProviderInterface` + entire `Definition/*` namespace
 
+**Status:** ✅ Closed (2026-08-22, commit `745f9e3`, A1 plan Task 3)
 **Priority:** Medium
 **Source:** dry-solid-reviewer audit (2026-08-22) — 🟡 DRY / dead code
 **Scope:** `writer/src/Interfaces/DataProviderInterface.php`, `writer/src/Definition/*.php`
