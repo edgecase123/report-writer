@@ -4,10 +4,10 @@ A deterministic reporting pipeline with a matching on-screen / print viewer.
 
 Two components, sharing this repo:
 
-- **`writer/`** — `foreup/reporting`, a PHP 7.4 library. Zero framework dependencies. Turns row data + a layout into paginated HTML or JSON.
+- **`writer/`** — `edgecase123/report-writer`, a PHP 7.4 library. Zero framework dependencies. Turns row data + a layout into paginated HTML or JSON.
 - **`frontend/`** — `reporting-viewer`, a Vite + Vue 3 + TypeScript app that fetches server-generated report HTML, previews it at variable zoom, and hands off to the browser's print dialog.
 
-The library and viewer are extracted from a larger foreUP application; deployed in the outer app they live at `api_rest/packages/foreup-reporting/` and `frontend/reporting-viewer/`. This repo contains only the extracted sources — the Symfony controllers, DBAL data providers, DI wiring, and route/permissions config live in the outer application, not here.
+The library is framework-agnostic PHP — usable in Symfony 5.x/7, Laravel 10+, or plain PHP (per [ADR-013](docs/09-conventions/decisions/013-framework-agnostic-library.md)). This repo also ships a Vite + Vue 3 viewer plus scaffolding for a Slim 4 + SQLite + Docker Compose demo runtime that lets you run the whole pipeline end-to-end with `docker compose up`. The Slim/Docker parts are reference material only — real consumers bring their own framework, DI container, HTTP layer, and orchestration.
 
 ## The pipeline
 
@@ -33,7 +33,7 @@ Full library documentation, including a step-by-step tutorial, expression types,
 
 ```
 report-writer/
-├── writer/                    # PHP 7.4 library (composer package foreup/reporting)
+├── writer/                    # PHP 7.4 library (composer package edgecase123/report-writer)
 │   ├── src/
 │   │   ├── Builder/           # ReportBuilder + Column (fluent immutable API)
 │   │   ├── Definition/        # ReportDefinition, BandDefinition, ElementDefinition
@@ -112,9 +112,9 @@ The viewer mounts on any element with id `reporting-viewer-app` and reads the re
 The library is agnostic to how it's wired into a host application. In the outer foreUP app, a typical filler looks like this — full walkthrough (data contract → provider → filler → controller → permissions) is in [`writer/README.md`](writer/README.md#tutorial-your-first-report).
 
 ```php
-use foreup\Reporting\Builder\Column;
-use foreup\Reporting\Builder\ReportBuilder;
-use foreup\Reporting\Registry\FormatterRegistry;
+use ReportWriter\Builder\Column;
+use ReportWriter\Builder\ReportBuilder;
+use ReportWriter\Registry\FormatterRegistry;
 
 $currency = FormatterRegistry::defaults()->get('currency');
 

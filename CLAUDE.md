@@ -6,10 +6,10 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Two independent components sit side by side:
 
-- `writer/` — `foreup/reporting`, a PHP 7.4 library (zero framework deps). PSR-4 namespace `foreup\Reporting\` → `writer/src/`.
+- `writer/` — `edgecase123/report-writer`, a PHP 7.4 library (zero framework deps). PSR-4 namespace `ReportWriter\` → `writer/src/`.
 - `frontend/` — `reporting-viewer`, a standalone Vite + Vue 3 + TypeScript viewer app that fetches and displays server-rendered report HTML.
 
-The two are deployed inside a larger foreUP application (referenced in `writer/README.md` as `api_rest/packages/foreup-reporting/` and `frontend/reporting-viewer/`); this repo contains only the extracted sources. Consumers (Symfony controllers, DBAL providers, `permissions.yaml`, `config/services.php` wiring) live in that outer application, not here.
+The library is framework-agnostic (per [ADR-013](docs/09-conventions/decisions/013-framework-agnostic-library.md)). Consumers wire it into their own stack: Symfony 5.x/7 controllers + `config/services.yaml`, Laravel 10+ service provider + controllers, or plain PHP. The `writer-app/` demo (Slim 4, planned in Sub-project A) is reference material, not a production recommendation.
 
 ## Common commands
 
