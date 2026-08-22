@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace Tests\Unit\Builder;
 
-use foreup\Reporting\Builder\Column;
-use foreup\Reporting\Builder\ReportBuilder;
-use foreup\Reporting\Expression\StaticExpression;
-use foreup\Reporting\Instance\BandInstance;
+use ReportWriter\Builder\Column;
+use ReportWriter\Builder\ReportBuilder;
+use ReportWriter\Expression\StaticExpression;
+use ReportWriter\Instance\BandInstance;
 use PHPUnit\Framework\TestCase;
 
 class ReportBuilderTest extends TestCase

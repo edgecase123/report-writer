@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace foreup\Reporting\Tests\Unit\Layout;
+namespace ReportWriter\Tests\Unit\Layout;
 
-use foreup\Reporting\Exceptions\ElementExceedsPageException;
-use foreup\Reporting\Instance\BandInstance;
-use foreup\Reporting\Instance\Content\TextContent;
-use foreup\Reporting\Instance\ElementInstance;
-use foreup\Reporting\Instance\ReportInstance;
-use foreup\Reporting\Layout\Flattener;
-use foreup\Reporting\Layout\LayoutService;
-use foreup\Reporting\Layout\PageConfig;
+use ReportWriter\Exceptions\ElementExceedsPageException;
+use ReportWriter\Instance\BandInstance;
+use ReportWriter\Instance\Content\TextContent;
+use ReportWriter\Instance\ElementInstance;
+use ReportWriter\Instance\ReportInstance;
+use ReportWriter\Layout\Flattener;
+use ReportWriter\Layout\LayoutService;
+use ReportWriter\Layout\PageConfig;
 use PHPUnit\Framework\TestCase;
 
 class LayoutServiceTest extends TestCase
@@ -103,7 +103,7 @@ class LayoutServiceTest extends TestCase
 
         $service = $this->makeService(10.0, 0.0, 0.0);
 
-        $nonSplittable = new class extends \foreup\Reporting\Instance\Content\ElementContent {
+        $nonSplittable = new class extends \ReportWriter\Instance\Content\ElementContent {
             public function getType(): string { return 'image'; }
             public function isSplittable(): bool { return false; }
             public function toArray(): array { return ['type' => 'image']; }

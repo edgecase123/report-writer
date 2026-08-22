@@ -2,17 +2,17 @@
 
 declare(strict_types=1);
 
-namespace foreup\Reporting\Tests\Unit\Layout;
+namespace ReportWriter\Tests\Unit\Layout;
 
-use foreup\Reporting\Exceptions\MissingSubreportException;
-use foreup\Reporting\Exceptions\RecursiveSubreportException;
-use foreup\Reporting\Instance\BandInstance;
-use foreup\Reporting\Instance\Content\SubreportContent;
-use foreup\Reporting\Instance\Content\TextContent;
-use foreup\Reporting\Instance\ElementInstance;
-use foreup\Reporting\Instance\ReportInstance;
-use foreup\Reporting\Instance\SubreportInstance;
-use foreup\Reporting\Layout\Flattener;
+use ReportWriter\Exceptions\MissingSubreportException;
+use ReportWriter\Exceptions\RecursiveSubreportException;
+use ReportWriter\Instance\BandInstance;
+use ReportWriter\Instance\Content\SubreportContent;
+use ReportWriter\Instance\Content\TextContent;
+use ReportWriter\Instance\ElementInstance;
+use ReportWriter\Instance\ReportInstance;
+use ReportWriter\Instance\SubreportInstance;
+use ReportWriter\Layout\Flattener;
 use PHPUnit\Framework\TestCase;
 
 class FlattenerTest extends TestCase

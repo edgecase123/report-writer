@@ -2,18 +2,18 @@
 
 declare(strict_types=1);
 
-namespace foreup\Reporting\Tests\Unit\Renderer;
+namespace ReportWriter\Tests\Unit\Renderer;
 
-use foreup\Reporting\Instance\BandInstance;
-use foreup\Reporting\Instance\Content\TextContent;
-use foreup\Reporting\Instance\ElementInstance;
-use foreup\Reporting\Instance\ReportInstance;
-use foreup\Reporting\Interfaces\ReportFillerInterface;
-use foreup\Reporting\Layout\Flattener;
-use foreup\Reporting\Layout\LayoutService;
-use foreup\Reporting\Layout\PageConfig;
-use foreup\Reporting\Renderer\JsonRenderer;
-use foreup\Reporting\ReportingPipeline;
+use ReportWriter\Instance\BandInstance;
+use ReportWriter\Instance\Content\TextContent;
+use ReportWriter\Instance\ElementInstance;
+use ReportWriter\Instance\ReportInstance;
+use ReportWriter\Interfaces\ReportFillerInterface;
+use ReportWriter\Layout\Flattener;
+use ReportWriter\Layout\LayoutService;
+use ReportWriter\Layout\PageConfig;
+use ReportWriter\Renderer\JsonRenderer;
+use ReportWriter\ReportingPipeline;
 use PHPUnit\Framework\TestCase;
 
 class JsonRendererTest extends TestCase

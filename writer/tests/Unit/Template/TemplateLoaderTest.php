@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace foreup\Reporting\Tests\Unit\Template;
+namespace ReportWriter\Tests\Unit\Template;
 
-use foreup\Reporting\Template\TemplateLoader;
+use ReportWriter\Template\TemplateLoader;
 use PHPUnit\Framework\TestCase;
 
 class TemplateLoaderTest extends TestCase

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace foreup\Reporting\Stream;
+namespace ReportWriter\Stream;
 
 class ReportStream implements \IteratorAggregate
 {

@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace foreup\Reporting\Builder;
+namespace ReportWriter\Builder;
 
-use foreup\Reporting\Expression\EvalContext;
-use foreup\Reporting\Expression\StaticExpression;
-use foreup\Reporting\Instance\BandInstance;
-use foreup\Reporting\Instance\Content\TextContent;
-use foreup\Reporting\Instance\ElementInstance;
-use foreup\Reporting\Instance\Grouping;
-use foreup\Reporting\Instance\ReportInstance;
+use ReportWriter\Expression\EvalContext;
+use ReportWriter\Expression\StaticExpression;
+use ReportWriter\Instance\BandInstance;
+use ReportWriter\Instance\Content\TextContent;
+use ReportWriter\Instance\ElementInstance;
+use ReportWriter\Instance\Grouping;
+use ReportWriter\Instance\ReportInstance;
 
 class ReportBuilder
 {

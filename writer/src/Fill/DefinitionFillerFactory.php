@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace foreup\Reporting\Fill;
+namespace ReportWriter\Fill;
 
-use foreup\Reporting\Registry\DataSourceRegistry;
-use foreup\Reporting\Registry\FormatterRegistry;
-use foreup\Reporting\Template\ReportTemplate;
+use ReportWriter\Registry\DataSourceRegistry;
+use ReportWriter\Registry\FormatterRegistry;
+use ReportWriter\Template\ReportTemplate;
 
 class DefinitionFillerFactory
 {

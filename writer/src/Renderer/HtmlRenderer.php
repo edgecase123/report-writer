@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace foreup\Reporting\Renderer;
+namespace ReportWriter\Renderer;
 
-use foreup\Reporting\Instance\Content\TextContent;
-use foreup\Reporting\Layout\PageConfig;
-use foreup\Reporting\Stream\Page;
-use foreup\Reporting\Stream\PositionedElement;
-use foreup\Reporting\Stream\ReportStream;
+use ReportWriter\Instance\Content\TextContent;
+use ReportWriter\Layout\PageConfig;
+use ReportWriter\Stream\Page;
+use ReportWriter\Stream\PositionedElement;
+use ReportWriter\Stream\ReportStream;
 
 class HtmlRenderer implements RendererInterface
 {

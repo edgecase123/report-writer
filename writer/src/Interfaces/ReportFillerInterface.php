@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace foreup\Reporting\Interfaces;
+namespace ReportWriter\Interfaces;
 
-use foreup\Reporting\Instance\ReportInstance;
+use ReportWriter\Instance\ReportInstance;
 
 interface ReportFillerInterface
 {

@@ -2,12 +2,12 @@
 
 declare(strict_types=1);
 
-namespace foreup\Reporting\Builder;
+namespace ReportWriter\Builder;
 
-use foreup\Reporting\Expression\AggregateExpression;
-use foreup\Reporting\Expression\ContentExpression;
-use foreup\Reporting\Expression\FieldExpression;
-use foreup\Reporting\Expression\StaticExpression;
+use ReportWriter\Expression\AggregateExpression;
+use ReportWriter\Expression\ContentExpression;
+use ReportWriter\Expression\FieldExpression;
+use ReportWriter\Expression\StaticExpression;
 
 class Column
 {

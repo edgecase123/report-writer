@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace foreup\Reporting\Instance;
+namespace ReportWriter\Instance;
 
-use foreup\Reporting\Instance\Content\ElementContent;
+use ReportWriter\Instance\Content\ElementContent;
 
 class ElementInstance
 {

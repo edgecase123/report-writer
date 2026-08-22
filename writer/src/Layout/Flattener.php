@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace foreup\Reporting\Layout;
+namespace ReportWriter\Layout;
 
-use foreup\Reporting\Exceptions\MissingSubreportException;
-use foreup\Reporting\Exceptions\RecursiveSubreportException;
-use foreup\Reporting\Instance\BandInstance;
-use foreup\Reporting\Instance\Content\SubreportContent;
-use foreup\Reporting\Instance\ReportInstance;
+use ReportWriter\Exceptions\MissingSubreportException;
+use ReportWriter\Exceptions\RecursiveSubreportException;
+use ReportWriter\Instance\BandInstance;
+use ReportWriter\Instance\Content\SubreportContent;
+use ReportWriter\Instance\ReportInstance;
 
 class Flattener
 {

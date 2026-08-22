@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace foreup\Reporting\Exceptions;
+namespace ReportWriter\Exceptions;
 
 class RecursiveSubreportException extends \RuntimeException
 {

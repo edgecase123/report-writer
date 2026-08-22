@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace foreup\Reporting\Renderer;
+namespace ReportWriter\Renderer;
 
-use foreup\Reporting\Stream\ReportStream;
+use ReportWriter\Stream\ReportStream;
 
 class JsonRenderer implements RendererInterface
 {

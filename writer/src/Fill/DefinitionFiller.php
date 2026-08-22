@@ -2,20 +2,20 @@
 
 declare(strict_types=1);
 
-namespace foreup\Reporting\Fill;
+namespace ReportWriter\Fill;
 
-use foreup\Reporting\Expression\AggregateFunction;
-use foreup\Reporting\Instance\BandInstance;
-use foreup\Reporting\Instance\Content\TextContent;
-use foreup\Reporting\Instance\ElementInstance;
-use foreup\Reporting\Instance\Grouping;
-use foreup\Reporting\Instance\ReportInstance;
-use foreup\Reporting\Interfaces\ReportFillerInterface;
-use foreup\Reporting\Registry\DataSourceRegistry;
-use foreup\Reporting\Registry\FormatterRegistry;
-use foreup\Reporting\Template\BandTemplate;
-use foreup\Reporting\Template\ElementTemplate;
-use foreup\Reporting\Template\ReportTemplate;
+use ReportWriter\Expression\AggregateFunction;
+use ReportWriter\Instance\BandInstance;
+use ReportWriter\Instance\Content\TextContent;
+use ReportWriter\Instance\ElementInstance;
+use ReportWriter\Instance\Grouping;
+use ReportWriter\Instance\ReportInstance;
+use ReportWriter\Interfaces\ReportFillerInterface;
+use ReportWriter\Registry\DataSourceRegistry;
+use ReportWriter\Registry\FormatterRegistry;
+use ReportWriter\Template\BandTemplate;
+use ReportWriter\Template\ElementTemplate;
+use ReportWriter\Template\ReportTemplate;
 
 class DefinitionFiller implements ReportFillerInterface
 {

@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace foreup\Reporting\Fill;
+namespace ReportWriter\Fill;
 
 class BandContext
 {

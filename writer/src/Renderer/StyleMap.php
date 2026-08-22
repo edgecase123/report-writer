@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace foreup\Reporting\Renderer;
+namespace ReportWriter\Renderer;
 
 /**
  * Maps band types to CSS property strings applied by the HtmlRenderer.

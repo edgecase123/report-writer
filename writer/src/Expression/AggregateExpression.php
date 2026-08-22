@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace foreup\Reporting\Expression;
+namespace ReportWriter\Expression;
 
 final class AggregateExpression implements ContentExpression
 {

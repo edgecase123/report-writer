@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace foreup\Reporting\Tests\Unit\Fill;
+namespace ReportWriter\Tests\Unit\Fill;
 
-use foreup\Reporting\Fill\DefinitionFiller;
-use foreup\Reporting\Interfaces\ReportDataSourceInterface;
-use foreup\Reporting\Registry\DataSourceRegistry;
-use foreup\Reporting\Registry\FormatterRegistry;
-use foreup\Reporting\Template\TemplateLoader;
+use ReportWriter\Fill\DefinitionFiller;
+use ReportWriter\Interfaces\ReportDataSourceInterface;
+use ReportWriter\Registry\DataSourceRegistry;
+use ReportWriter\Registry\FormatterRegistry;
+use ReportWriter\Template\TemplateLoader;
 use PHPUnit\Framework\TestCase;
 
 class DefinitionFillerTest extends TestCase

@@ -2,19 +2,19 @@
 
 declare(strict_types=1);
 
-namespace foreup\Reporting\Tests\Unit;
+namespace ReportWriter\Tests\Unit;
 
-use foreup\Reporting\Instance\BandInstance;
-use foreup\Reporting\Instance\Content\SubreportContent;
-use foreup\Reporting\Instance\Content\TextContent;
-use foreup\Reporting\Instance\ElementInstance;
-use foreup\Reporting\Instance\ReportInstance;
-use foreup\Reporting\Instance\SubreportInstance;
-use foreup\Reporting\Interfaces\ReportFillerInterface;
-use foreup\Reporting\Layout\Flattener;
-use foreup\Reporting\Layout\LayoutService;
-use foreup\Reporting\Layout\PageConfig;
-use foreup\Reporting\ReportingPipeline;
+use ReportWriter\Instance\BandInstance;
+use ReportWriter\Instance\Content\SubreportContent;
+use ReportWriter\Instance\Content\TextContent;
+use ReportWriter\Instance\ElementInstance;
+use ReportWriter\Instance\ReportInstance;
+use ReportWriter\Instance\SubreportInstance;
+use ReportWriter\Interfaces\ReportFillerInterface;
+use ReportWriter\Layout\Flattener;
+use ReportWriter\Layout\LayoutService;
+use ReportWriter\Layout\PageConfig;
+use ReportWriter\ReportingPipeline;
 use PHPUnit\Framework\TestCase;
 
 class ReportingPipelineTest extends TestCase

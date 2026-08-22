@@ -1,12 +1,12 @@
 {
-    "name": "foreup/reporting",
+    "name": "edgecase123/report-writer",
     "version": "0.1.0",
-    "description": "Deterministic reporting pipeline: Definition → Fill → Layout → Stream",
+    "description": "Deterministic reporting pipeline: Fill → Layout → Stream → Render. Framework-agnostic.",
     "type": "library",
     "authors": [
         {
-            "name": "foreUP",
-            "email": "dev@foreup.com",
+            "name": "edgecase",
+            "email": "edgecase123@gmail.com",
             "role": "Developer"
         }
     ],
@@ -18,12 +18,12 @@
     },
     "autoload": {
         "psr-4": {
-            "foreup\\Reporting\\": "src/"
+            "ReportWriter\\": "src/"
         }
     },
     "autoload-dev": {
         "psr-4": {
-            "foreup\\Reporting\\Tests\\": "tests/"
+            "ReportWriter\\Tests\\": "tests/"
         }
     }
 }

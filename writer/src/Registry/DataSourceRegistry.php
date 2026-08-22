@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace foreup\Reporting\Registry;
+namespace ReportWriter\Registry;
 
-use foreup\Reporting\Interfaces\ReportDataSourceInterface;
+use ReportWriter\Interfaces\ReportDataSourceInterface;
 
 class DataSourceRegistry
 {

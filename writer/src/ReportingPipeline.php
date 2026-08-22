@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace foreup\Reporting;
+namespace ReportWriter;
 
-use foreup\Reporting\Interfaces\ReportFillerInterface;
-use foreup\Reporting\Layout\LayoutService;
-use foreup\Reporting\Stream\ReportStream;
+use ReportWriter\Interfaces\ReportFillerInterface;
+use ReportWriter\Layout\LayoutService;
+use ReportWriter\Stream\ReportStream;
 
 class ReportingPipeline
 {

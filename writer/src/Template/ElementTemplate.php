@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace foreup\Reporting\Template;
+namespace ReportWriter\Template;
 
 class ElementTemplate
 {

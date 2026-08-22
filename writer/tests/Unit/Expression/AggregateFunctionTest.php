@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace foreup\Reporting\Tests\Unit\Expression;
+namespace ReportWriter\Tests\Unit\Expression;
 
-use foreup\Reporting\Expression\AggregateFunction;
+use ReportWriter\Expression\AggregateFunction;
 use PHPUnit\Framework\TestCase;
 
 final class AggregateFunctionTest extends TestCase

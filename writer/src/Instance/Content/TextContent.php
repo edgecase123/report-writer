@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace foreup\Reporting\Instance\Content;
+namespace ReportWriter\Instance\Content;
 
 class TextContent extends ElementContent
 {

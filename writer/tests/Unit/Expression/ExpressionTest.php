@@ -2,13 +2,13 @@
 
 declare(strict_types=1);
 
-namespace foreup\Reporting\Tests\Unit\Expression;
+namespace ReportWriter\Tests\Unit\Expression;
 
-use foreup\Reporting\Expression\AggregateExpression;
-use foreup\Reporting\Expression\ComputedExpression;
-use foreup\Reporting\Expression\EvalContext;
-use foreup\Reporting\Expression\FieldExpression;
-use foreup\Reporting\Expression\StaticExpression;
+use ReportWriter\Expression\AggregateExpression;
+use ReportWriter\Expression\ComputedExpression;
+use ReportWriter\Expression\EvalContext;
+use ReportWriter\Expression\FieldExpression;
+use ReportWriter\Expression\StaticExpression;
 use PHPUnit\Framework\TestCase;
 
 class ExpressionTest extends TestCase

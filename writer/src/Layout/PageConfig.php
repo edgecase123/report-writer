@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace foreup\Reporting\Layout;
+namespace ReportWriter\Layout;
 
 class PageConfig
 {

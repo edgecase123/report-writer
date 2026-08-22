@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace foreup\Reporting\Expression;
+namespace ReportWriter\Expression;
 
 /**
  * Shared aggregate math for sum/avg/min/max/count.

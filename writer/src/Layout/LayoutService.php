@@ -2,15 +2,15 @@
 
 declare(strict_types=1);
 
-namespace foreup\Reporting\Layout;
+namespace ReportWriter\Layout;
 
-use foreup\Reporting\Exceptions\ElementExceedsPageException;
-use foreup\Reporting\Instance\BandInstance;
-use foreup\Reporting\Instance\Content\TextContent;
-use foreup\Reporting\Instance\ReportInstance;
-use foreup\Reporting\Stream\Page;
-use foreup\Reporting\Stream\PositionedElement;
-use foreup\Reporting\Stream\ReportStream;
+use ReportWriter\Exceptions\ElementExceedsPageException;
+use ReportWriter\Instance\BandInstance;
+use ReportWriter\Instance\Content\TextContent;
+use ReportWriter\Instance\ReportInstance;
+use ReportWriter\Stream\Page;
+use ReportWriter\Stream\PositionedElement;
+use ReportWriter\Stream\ReportStream;
 
 class LayoutService
 {
