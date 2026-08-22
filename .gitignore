@@ -1,0 +1,39 @@
+# PHP
+composer.phar
+/writer/vendor/
+/writer-app/vendor/
+.phpunit.result.cache
+
+# Node
+node_modules/
+
+# SQLite data (writer-app when it lands)
+/writer-app/data/
+
+# Environment
+.env
+.env.local
+
+# Build output
+/writer-app/public/build/
+/dist/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.idea/
+.vscode/
+.obsidian/
+*.swp
+
+# Temporary
+*.bak
+*.tmp
+/tmp/
+
+# Claude Code — machine-specific settings (agents/skills DO ship)
+.claude/settings.json
+.claude/settings.local.json
+.claude/context/

@@ -1,0 +1,29 @@
+{
+    "name": "foreup/reporting",
+    "version": "0.1.0",
+    "description": "Deterministic reporting pipeline: Definition → Fill → Layout → Stream",
+    "type": "library",
+    "authors": [
+        {
+            "name": "foreUP",
+            "email": "dev@foreup.com",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": ">=7.4"
+    },
+    "require-dev": {
+        "phpunit/phpunit": "^9.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "foreup\\Reporting\\": "src/"
+        }
+    },
+    "autoload-dev": {
+        "psr-4": {
+            "foreup\\Reporting\\Tests\\": "tests/"
+        }
+    }
+}
