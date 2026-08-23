@@ -1,6 +1,6 @@
 # TICKET-017: Title element width — columns extent vs printable page width
 
-**Status:** Open — design decision required (breaking-vs-non-breaking trade-off)
+**Status:** ✅ Closed — resolved via `width = 0.0` sentinel + Layout substitution
 **Priority:** Low (cosmetic; visible in demo reports where columns don't span printable area)
 **Source:** design discussion 2026-08-23 — noticed while running the A2 Daily Sales demo
 **Scope:** `writer/src/Builder/ReportBuilder.php` (title band construction), possibly `writer/src/Layout/PageConfig.php`, possibly `writer/src/Renderer/StyleMap.php`
@@ -40,3 +40,19 @@ Not yet decided. Option B feels least invasive but adds API surface for a cosmet
 
 - Discussion: 2026-08-23 session on A2 Daily Sales demo rendering
 - Demo workaround landed with this ticket: `writer-app/src/Reports/DailySalesFiller.php` columns widened so `totalWidth()` ≈ printable area (572pt on Letter with 20pt margins). Not a fix — just moves the visual anchor.
+
+## Resolution
+
+Decoupled the title band from column widths: `ReportBuilder::title()` emits the
+title element with `width = 0.0` (the "no declared width" sentinel);
+`LayoutService` substitutes `PageConfig::printableWidth()` at `PositionedElement`
+emission. Fill stays PageConfig-free; renderer unchanged.
+
+- Design spec: [`docs/superpowers/specs/2026-08-23-title-alignment-design.md`](../superpowers/specs/2026-08-23-title-alignment-design.md)
+- Implementation plan: [`docs/superpowers/plans/2026-08-23-title-alignment-implementation.md`](../superpowers/plans/2026-08-23-title-alignment-implementation.md)
+- Architecture note: [`docs/architecture/element-width-sentinel.md`](../architecture/element-width-sentinel.md)
+
+Group-header bands still derive their element width from `totalWidth()`; whether
+to apply the same principle there is a separate ticket (worth its own decision,
+since a group-header banner "spanning the columns it groups" is arguably
+intentional intent, not a coupling smell).
