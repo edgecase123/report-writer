@@ -204,8 +204,23 @@ class ReportBuilderTest extends TestCase
         $bands = $this->baseBuilder()->title('T')->build()->getBandInstances();
         $el    = $bands[0]->getElements()[0];
 
-        // totalWidth = max(0+200, 200+100) = 300
-        $this->assertSame(300.0, $el->getWidth());
+        // width=0 is the sentinel meaning "use printable page width" (Ticket 017)
+        $this->assertSame(0.0, $el->getWidth());
+    }
+
+    public function testTitleElementDeclaresNoWidth(): void
+    {
+        // Title element should carry the width=0 sentinel so LayoutService
+        // substitutes printable page width. This guards against any future
+        // re-introduction of cross-band coupling (e.g. reading from $this->columns).
+        $bands  = $this->baseBuilder()->title('My Report')->build()->getBandInstances();
+        $title  = $bands[0];
+        $this->assertSame('band_title', $title->getBandInstanceId());
+
+        $elements = $title->getElements();
+        $this->assertCount(1, $elements);
+        $this->assertSame(0.0, $elements[0]->getWidth(),
+            'title element must declare width=0 (no coupling to columns extent)');
     }
 
     // ── Detail rows ───────────────────────────────────────────────────────────
