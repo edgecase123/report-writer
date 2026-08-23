@@ -7,6 +7,7 @@ namespace ReportWriter\App;
 use PDO;
 use ReportWriter\App\Database\SqliteConnectionFactory;
 use ReportWriter\App\Http\HealthController;
+use ReportWriter\App\Http\JsonErrorHandler;
 use ReportWriter\App\Http\ReportController;
 use ReportWriter\App\Reports\DailySalesFiller;
 use ReportWriter\App\Reports\DataSource\SqliteDailySalesProvider;
@@ -16,6 +17,7 @@ use ReportWriter\App\Reports\ReportRegistry;
 use RuntimeException;
 use Slim\App;
 use Slim\Factory\AppFactory as SlimAppFactory;
+use Slim\Psr7\Factory\ResponseFactory;
 
 final class Kernel
 {
@@ -32,6 +34,10 @@ final class Kernel
         $app->get('/api/reports/{id}', function ($request, $response, array $args) use ($container) {
             return $container->get(ReportController::class)->show($request, $response, $args);
         });
+
+        $debug = (bool) (getenv('APP_DEBUG') ?: false);
+        $errorMiddleware = $app->addErrorMiddleware($debug, true, true);
+        $errorMiddleware->setDefaultErrorHandler(new JsonErrorHandler(new ResponseFactory(), $debug));
 
         return $app;
     }

@@ -33,4 +33,22 @@ final class ReportRenderSmokeTest extends TestCase
         $this->assertStringContainsString('1002', $html, 'order id 1002 should appear in the rendered HTML');
         $this->assertStringContainsString('1003', $html, 'order id 1003 should appear in the rendered HTML');
     }
+
+    public function testUnknownReportReturns404Json(): void
+    {
+        $pdo = DailySalesFixture::newPdo();
+
+        $app = AppFactory::buildTestApp(static function (Container $c) use ($pdo): void {
+            $c->set(PDO::class, static fn () => $pdo);
+        });
+
+        $request  = (new ServerRequestFactory())->createServerRequest('GET', '/api/reports/nope?date=2026-08-22');
+        $response = $app->handle($request);
+
+        $this->assertSame(404, $response->getStatusCode());
+        $this->assertSame('application/json', $response->getHeaderLine('Content-Type'));
+        $payload = json_decode((string) $response->getBody(), true);
+        $this->assertSame(404, $payload['error']['status']);
+        $this->assertStringContainsString("Unknown report 'nope'", $payload['error']['message']);
+    }
 }
