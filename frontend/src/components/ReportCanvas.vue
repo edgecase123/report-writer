@@ -1,5 +1,13 @@
 <template>
-    <div class="viewer-canvas">
+    <div
+        ref="canvasEl"
+        class="viewer-canvas"
+        :class="{ 'viewer-canvas--pannable': hasOverflow && !isDragging, 'viewer-canvas--dragging': isDragging }"
+        @pointerdown="onPointerDown"
+        @pointermove="onPointerMove"
+        @pointerup="onPointerUp"
+        @pointercancel="onPointerUp"
+    >
         <div v-if="loading" class="viewer-canvas__state" role="status" aria-live="polite">Loading report…</div>
         <div v-else-if="empty" class="viewer-canvas__state viewer-canvas__state--empty" role="status">
             No report URL provided.
@@ -24,7 +32,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onBeforeUnmount, watch, nextTick } from 'vue';
 import { zoomLevel, reportUrl, loading, error, empty } from '../state/viewerState';
 
 // US Letter default (612 x 792 pt) — matches PageConfig default on the server.
@@ -34,6 +42,9 @@ const DEFAULT_PAGE_HEIGHT = 792;
 const reportHtml     = ref<string>('');
 const basePageWidth  = ref<number>(DEFAULT_PAGE_WIDTH);
 const basePageHeight = ref<number>(DEFAULT_PAGE_HEIGHT);
+const canvasEl       = ref<HTMLElement | null>(null);
+const hasOverflow    = ref<boolean>(false);
+const isDragging     = ref<boolean>(false);
 
 /**
  * Parse a CSSStyleDeclaration length string like "612pt" or "792.00pt" to a
@@ -115,7 +126,100 @@ async function load(): Promise<void> {
     }
 }
 
-onMounted(load);
+onMounted(() => {
+    load();
+    window.addEventListener('resize', updateOverflow);
+});
+
+onBeforeUnmount(() => {
+    window.removeEventListener('resize', updateOverflow);
+});
+
+function updateOverflow(): void {
+    const el = canvasEl.value;
+    if (!el) {
+        hasOverflow.value = false;
+        return;
+    }
+    hasOverflow.value = el.scrollWidth > el.clientWidth || el.scrollHeight > el.clientHeight;
+}
+
+// Ticket 019 (Option A): after any zoom change, re-center the report
+// horizontally in the scroll container and reset vertical scroll to top.
+// nextTick waits for the .report-scaler width to update before we read
+// scrollWidth. Vertical resets to top rather than preserving position —
+// simplest choice; upgrade to focal-point preservation later if needed.
+watch(zoomLevel, async () => {
+    await nextTick();
+    const el = canvasEl.value;
+    if (!el) return;
+    el.scrollLeft = Math.max(0, (el.scrollWidth - el.clientWidth) / 2);
+    el.scrollTop  = 0;
+    updateOverflow();
+});
+
+// Report content arrives async; recompute overflow once it's rendered so
+// the grab cursor appears on the first paint that has real dimensions.
+watch(reportHtml, async () => {
+    await nextTick();
+    updateOverflow();
+});
+
+// Ticket 020: drag-to-pan when the scaled report overflows the viewport.
+// Skip panning when the pointer landed on a text-bearing element so native
+// text selection still works (Option (a) from the ticket); see isTextTarget.
+let startX = 0;
+let startY = 0;
+let startScrollLeft = 0;
+let startScrollTop  = 0;
+let activePointerId: number | null = null;
+
+function isTextTarget(target: EventTarget | null): boolean {
+    // Report HTML from HtmlRenderer places each text value in its own leaf
+    // <div class="fu-el ..."> whose direct child is a Text node. Container
+    // elements (.viewer-canvas, .report-scaler, .report-inner, .fu-page) have
+    // element children only. So "clicked on text" ≡ "target has a direct
+    // TEXT_NODE child with non-whitespace content." caretPositionFromPoint
+    // was tried first but snaps to the nearest text even for background
+    // clicks, so it hijacked pan on the padding.
+    if (!(target instanceof Element)) return false;
+    return Array.from(target.childNodes).some(
+        (child) => child.nodeType === Node.TEXT_NODE && !!child.nodeValue && child.nodeValue.trim() !== ''
+    );
+}
+
+function onPointerDown(e: PointerEvent): void {
+    if (e.button !== 0) return;             // primary button only
+    if (!hasOverflow.value) return;         // nothing to pan
+    if (isTextTarget(e.target)) return;
+
+    const el = canvasEl.value;
+    if (!el) return;
+
+    activePointerId = e.pointerId;
+    startX          = e.clientX;
+    startY          = e.clientY;
+    startScrollLeft = el.scrollLeft;
+    startScrollTop  = el.scrollTop;
+    isDragging.value = true;
+    el.setPointerCapture(e.pointerId);
+    e.preventDefault();
+}
+
+function onPointerMove(e: PointerEvent): void {
+    if (activePointerId === null || e.pointerId !== activePointerId) return;
+    const el = canvasEl.value;
+    if (!el) return;
+    el.scrollLeft = startScrollLeft - (e.clientX - startX);
+    el.scrollTop  = startScrollTop  - (e.clientY - startY);
+}
+
+function onPointerUp(e: PointerEvent): void {
+    if (activePointerId === null || e.pointerId !== activePointerId) return;
+    canvasEl.value?.releasePointerCapture(e.pointerId);
+    activePointerId  = null;
+    isDragging.value = false;
+}
 </script>
 
 <style scoped>
@@ -127,6 +231,21 @@ onMounted(load);
     display: flex;
     flex-direction: column;
     align-items: center;
+}
+
+/*
+ * Ticket 020: drag-to-pan cursor states. Only show grab affordance when the
+ * scaled report actually overflows (hasOverflow is JS-computed and toggles
+ * the --pannable class). During an active drag, --dragging overrides to
+ * grabbing regardless of overflow (isDragging implies overflow anyway).
+ */
+.viewer-canvas--pannable {
+    cursor: grab;
+}
+
+.viewer-canvas--dragging {
+    cursor: grabbing;
+    user-select: none;
 }
 
 /*
