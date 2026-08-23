@@ -1,0 +1,59 @@
+{
+  "report_definition_id": "open-tabs",
+  "data_source": "open-tabs",
+  "bands": [
+    {
+      "id": "title",
+      "type": "title",
+      "elements": [
+        {
+          "id": "title_text",
+          "x": 0, "width": 0, "height": 24, "align": "center",
+          "content": { "type": "text", "value": "Open Tabs" }
+        }
+      ]
+    },
+    {
+      "id": "col_header",
+      "type": "col-header",
+      "elements": [
+        {
+          "id": "hdr_order",
+          "x": 0, "width": 120, "height": 16, "align": "left",
+          "content": { "type": "text", "value": "Order" }
+        },
+        {
+          "id": "hdr_opened",
+          "x": 120, "width": 200, "height": 16, "align": "left",
+          "content": { "type": "text", "value": "Opened" }
+        },
+        {
+          "id": "hdr_running_total",
+          "x": 320, "width": 160, "height": 16, "align": "right",
+          "content": { "type": "text", "value": "Running Total" }
+        }
+      ]
+    },
+    {
+      "id": "detail",
+      "type": "detail",
+      "elements": [
+        {
+          "id": "order_id",
+          "x": 0, "width": 120, "height": 14, "align": "left",
+          "content": { "type": "field", "field": "order_id" }
+        },
+        {
+          "id": "opened_at",
+          "x": 120, "width": 200, "height": 14, "align": "left",
+          "content": { "type": "field", "field": "opened_at" }
+        },
+        {
+          "id": "running_total",
+          "x": 320, "width": 160, "height": 14, "align": "right",
+          "content": { "type": "field", "field": "running_total_cents", "format": "cents" }
+        }
+      ]
+    }
+  ]
+}
