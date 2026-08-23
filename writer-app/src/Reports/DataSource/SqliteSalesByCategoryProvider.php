@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace ReportWriter\App\Reports\DataSource;
 
-use InvalidArgumentException;
 use PDO;
 use ReportWriter\Interfaces\ReportDataSourceInterface;
 
@@ -23,10 +22,7 @@ final class SqliteSalesByCategoryProvider implements ReportDataSourceInterface
      */
     public function fetchRows(array $params): array
     {
-        $date = $params['date'] ?? null;
-        if (!is_string($date) || preg_match('/^\d{4}-\d{2}-\d{2}$/', $date) !== 1) {
-            throw new InvalidArgumentException("Parameter 'date' must be YYYY-MM-DD; got " . var_export($date, true));
-        }
+        $date = DateParam::require($params);
 
         $sql = <<<SQL
             SELECT
