@@ -1,0 +1,44 @@
+#!/usr/bin/env php
+<?php
+
+declare(strict_types=1);
+
+require __DIR__ . '/../vendor/autoload.php';
+
+use ReportWriter\App\Database\Seed;
+use ReportWriter\App\Database\SqliteConnectionFactory;
+
+require __DIR__ . '/../database/seed.php';
+
+$command = $argv[1] ?? 'help';
+
+switch ($command) {
+    case 'db:seed':
+        $path = getenv('SQLITE_PATH') ?: (__DIR__ . '/../data/report-writer.sqlite');
+
+        if (file_exists($path)) {
+            fwrite(STDERR, "Removing existing DB at {$path}\n");
+            unlink($path);
+        }
+
+        $pdo = SqliteConnectionFactory::createFromPath($path);
+        SqliteConnectionFactory::loadSchema($pdo, __DIR__ . '/../database/schema.sql');
+        Seed::run($pdo);
+
+        $counts = [];
+        foreach (['categories', 'items', 'orders', 'order_items'] as $t) {
+            $counts[$t] = (int) $pdo->query("SELECT COUNT(*) FROM {$t}")->fetchColumn();
+        }
+        fwrite(STDOUT, "Seeded {$path}\n");
+        foreach ($counts as $t => $n) {
+            fwrite(STDOUT, sprintf("  %-12s %6d\n", $t, $n));
+        }
+        exit(0);
+
+    case 'help':
+    default:
+        fwrite(STDERR, "Usage: bin/console <command>\n");
+        fwrite(STDERR, "\nCommands:\n");
+        fwrite(STDERR, "  db:seed   Reset SQLITE_PATH (or data/report-writer.sqlite) and load deterministic demo data.\n");
+        exit($command === 'help' ? 0 : 1);
+}
