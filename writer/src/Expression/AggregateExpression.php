@@ -4,13 +4,10 @@ declare(strict_types=1);
 
 namespace ReportWriter\Expression;
 
-final class AggregateExpression implements ContentExpression
+final class AggregateExpression extends AbstractFormattableExpression
 {
     private string $fn;
     private string $field;
-
-    /** @var callable|null */
-    private $formatter;
 
     public function __construct(string $fn, string $field, ?callable $formatter = null)
     {
@@ -19,22 +16,12 @@ final class AggregateExpression implements ContentExpression
         $this->formatter = $formatter;
     }
 
-    public function withFormatter(callable $formatter): self
-    {
-        $clone            = clone $this;
-        $clone->formatter = $formatter;
-        return $clone;
-    }
-
     public function getFn(): string { return $this->fn; }
 
     public function evaluate(EvalContext $ctx): string
     {
         $value = $this->compute($ctx->aggregateRows);
-        if ($this->formatter !== null) {
-            return (string) ($this->formatter)($value);
-        }
-        return (string) $value;
+        return $this->applyFormatter($value);
     }
 
     private function compute(array $rows): float

@@ -4,12 +4,9 @@ declare(strict_types=1);
 
 namespace ReportWriter\Expression;
 
-final class FieldExpression implements ContentExpression
+final class FieldExpression extends AbstractFormattableExpression
 {
     private string $field;
-
-    /** @var callable|null */
-    private $formatter;
 
     public function __construct(string $field, ?callable $formatter = null)
     {
@@ -17,19 +14,9 @@ final class FieldExpression implements ContentExpression
         $this->formatter = $formatter;
     }
 
-    public function withFormatter(callable $formatter): self
-    {
-        $clone            = clone $this;
-        $clone->formatter = $formatter;
-        return $clone;
-    }
-
     public function evaluate(EvalContext $ctx): string
     {
         $value = $ctx->row[$this->field] ?? '';
-        if ($this->formatter !== null) {
-            return (string) ($this->formatter)($value);
-        }
-        return (string) $value;
+        return $this->applyFormatter($value);
     }
 }
