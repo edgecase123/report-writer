@@ -45,7 +45,7 @@ class HtmlRenderer implements RendererInterface
         $h = $this->pageConfig->getHeight();
 
         $out = sprintf(
-            '<div class="fu-page" style="width:%.2fpt;height:%.2fpt;" data-page="%d">',
+            '<div class="rw-page" style="width:%.2fpt;height:%.2fpt;" data-page="%d">',
             $w,
             $h,
             $page->getPageNumber()
@@ -106,7 +106,7 @@ class HtmlRenderer implements RendererInterface
         }
 
         $style = sprintf('top:%.2fpt;height:%.2fpt;', $minY, $maxH);
-        $class = 'fu-band-overlay fu-band-overlay-' . StyleMap::sanitize($bandType);
+        $class = 'rw-band-overlay rw-band-overlay-' . StyleMap::sanitize($bandType);
 
         return sprintf('<div class="%s" style="%s"></div>', $class, $style);
     }
@@ -131,9 +131,9 @@ class HtmlRenderer implements RendererInterface
             $style .= 'text-align:' . htmlspecialchars($el->getTextAlign(), ENT_QUOTES, 'UTF-8') . ';';
         }
 
-        $class = 'fu-el';
+        $class = 'rw-el';
         if ($el->getBandType() !== '') {
-            $class .= ' fu-band-' . StyleMap::sanitize($el->getBandType());
+            $class .= ' rw-band-' . StyleMap::sanitize($el->getBandType());
         }
 
         return sprintf(
@@ -153,15 +153,15 @@ class HtmlRenderer implements RendererInterface
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <style>
 body{margin:0;padding:20pt;background:#e0e0e0;font-family:sans-serif}
-.fu-page{position:relative;background:#fff;margin:0 auto 24pt;box-shadow:0 2px 8px rgba(0,0,0,.25);overflow:hidden}
-.fu-el{position:absolute;box-sizing:border-box;font-size:9pt;line-height:1.3;overflow:hidden;white-space:pre-wrap}
-.fu-band-overlay{position:absolute;left:0;width:100%;pointer-events:none;}
+.rw-page{position:relative;background:#fff;margin:0 auto 24pt;box-shadow:0 2px 8px rgba(0,0,0,.25);overflow:hidden}
+.rw-el{position:absolute;box-sizing:border-box;font-size:9pt;line-height:1.3;overflow:hidden;white-space:pre-wrap}
+.rw-band-overlay{position:absolute;left:0;width:100%;pointer-events:none;}
 ' . $this->styleMap->toCss() . '
 @media print{
 @page{margin:0}
 body{padding:0;background:none}
-.fu-page{margin:0;box-shadow:none;break-after:page;page-break-after:always}
-.fu-page:last-child{break-after:avoid;page-break-after:avoid}
+.rw-page{margin:0;box-shadow:none;break-after:page;page-break-after:always}
+.rw-page:last-child{break-after:avoid;page-break-after:avoid}
 }
 </style>
 </head>

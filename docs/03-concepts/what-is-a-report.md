@@ -128,7 +128,7 @@ Deep dive in [Expressions and formatters](expressions-and-formatters.md) (planne
 
 After layout, the report is split into pages. Each page is a list of **positioned elements** — every element from every band that ended up on that page, with its absolute `(x, y)` computed from the band's position plus the element's in-band offset.
 
-A page is what a renderer emits. HTML renders one page as one `<div class="fu-page">`; JSON renders one page as one array of positioned-element objects.
+A page is what a renderer emits. HTML renders one page as one `<div class="rw-page">`; JSON renders one page as one array of positioned-element objects.
 
 ---
 

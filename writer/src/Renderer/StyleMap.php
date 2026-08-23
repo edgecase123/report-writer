@@ -21,7 +21,7 @@ class StyleMap
     private array $bandMap;
 
     /**
-     * @param array<string, array<string, string>> $elementMap  Per-element CSS applied to each fu-el div.
+     * @param array<string, array<string, string>> $elementMap  Per-element CSS applied to each rw-el div.
      * @param array<string, array<string, string>> $bandMap     Per-band CSS applied to a full-width overlay div.
      */
     public function __construct(array $elementMap = [], array $bandMap = [])
@@ -94,14 +94,14 @@ class StyleMap
     {
         $css = '';
         foreach ($this->elementMap as $bandType => $styles) {
-            $css .= '.fu-band-' . self::sanitize($bandType) . '{';
+            $css .= '.rw-band-' . self::sanitize($bandType) . '{';
             foreach ($styles as $prop => $value) {
                 $css .= $prop . ':' . $value . ';';
             }
             $css .= '}';
         }
         foreach ($this->bandMap as $bandType => $styles) {
-            $css .= '.fu-band-overlay-' . self::sanitize($bandType) . '{';
+            $css .= '.rw-band-overlay-' . self::sanitize($bandType) . '{';
             foreach ($styles as $prop => $value) {
                 $css .= $prop . ':' . $value . ';';
             }

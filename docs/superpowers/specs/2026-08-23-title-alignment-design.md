@@ -16,7 +16,7 @@ $titleBand  = new BandInstance('band_title', 'title', [
 ]);
 ```
 
-The title element's width is derived from the columns' extent. `StyleMap`'s default CSS applies `text-align: center` to `.fu-band-title`, so text centers *within the title element's box*. When columns don't span the printable page width — the common case — the title's box is narrower than the page, and the visual result appears left-of-page-center.
+The title element's width is derived from the columns' extent. `StyleMap`'s default CSS applies `text-align: center` to `.rw-band-title`, so text centers *within the title element's box*. When columns don't span the printable page width — the common case — the title's box is narrower than the page, and the visual result appears left-of-page-center.
 
 The visible symptom (off-center title) is a leading indicator of a deeper architectural smell: **one band is derived from another band's contents**. That coupling is always wrong; it just happens to *look* right when columns extent equals printable area.
 
