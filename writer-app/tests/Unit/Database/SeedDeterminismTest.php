@@ -35,6 +35,8 @@ final class SeedDeterminismTest extends TestCase
             'items'       => $pdo->query('SELECT * FROM items       ORDER BY id')->fetchAll(),
             'orders'      => $pdo->query('SELECT * FROM orders      ORDER BY id')->fetchAll(),
             'order_items' => $pdo->query('SELECT * FROM order_items ORDER BY id')->fetchAll(),
+            'payments'    => $pdo->query('SELECT * FROM payments    ORDER BY id')->fetchAll(),
+            'staff'       => $pdo->query('SELECT * FROM staff       ORDER BY id')->fetchAll(),
         ];
     }
 }

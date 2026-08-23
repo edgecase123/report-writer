@@ -1,5 +1,4 @@
--- Coffee-shop POS schema (subset used by A2).
--- Full schema (staff, payments, template_drafts) lands with A3 and A5.
+-- Coffee-shop POS schema. staff + payments added in A3.1; template_drafts lands with A5.
 
 CREATE TABLE IF NOT EXISTS categories (
     id   INTEGER PRIMARY KEY,
@@ -29,3 +28,21 @@ CREATE TABLE IF NOT EXISTS order_items (
 
 CREATE INDEX IF NOT EXISTS orders_closed_at_idx     ON orders(closed_at);
 CREATE INDEX IF NOT EXISTS order_items_order_id_idx ON order_items(order_id);
+
+CREATE TABLE IF NOT EXISTS staff (
+    id   INTEGER PRIMARY KEY,
+    name TEXT    NOT NULL,
+    role TEXT    NOT NULL              -- e.g. 'barista', 'shift_lead', 'manager'
+);
+
+CREATE TABLE IF NOT EXISTS payments (
+    id            INTEGER PRIMARY KEY,
+    order_id      INTEGER NOT NULL REFERENCES orders(id),
+    method        TEXT    NOT NULL,    -- 'cash' | 'card' | 'mobile'
+    amount_cents  INTEGER NOT NULL,
+    taken_at      TEXT    NOT NULL,    -- ISO-8601 UTC
+    staff_id      INTEGER NOT NULL REFERENCES staff(id)
+);
+
+CREATE INDEX IF NOT EXISTS payments_order_id_idx ON payments(order_id);
+CREATE INDEX IF NOT EXISTS payments_taken_at_idx ON payments(taken_at);

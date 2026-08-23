@@ -16,9 +16,8 @@ if (class_exists(Seed::class, false)) {
  * Deterministic coffee-shop seed for the demo.
  *
  * Contract per ADR-002: mt_srand(1); ~90 days of activity ending on a fixed
- * anchor date (2026-08-22 UTC). Reads/writes only the 4 tables A2 defines
- * (categories, items, orders, order_items). A3 extends this to cover staff,
- * payments, and the remaining reports' data needs.
+ * anchor date (2026-08-22 UTC). Populates categories, items, staff, orders,
+ * order_items, payments. A5 will add template_drafts.
  */
 final class Seed
 {
@@ -36,7 +35,9 @@ final class Seed
             self::wipe($pdo);
             self::insertCategories($pdo);
             self::insertItems($pdo);
+            self::insertStaff($pdo);
             self::insertOrdersAndItems($pdo);
+            self::insertPayments($pdo);
             $pdo->commit();
         } catch (\Throwable $e) {
             $pdo->rollBack();
@@ -46,9 +47,11 @@ final class Seed
 
     private static function wipe(PDO $pdo): void
     {
+        $pdo->exec('DELETE FROM payments');
         $pdo->exec('DELETE FROM order_items');
         $pdo->exec('DELETE FROM orders');
         $pdo->exec('DELETE FROM items');
+        $pdo->exec('DELETE FROM staff');
         $pdo->exec('DELETE FROM categories');
     }
 
@@ -84,6 +87,22 @@ final class Seed
         );
         foreach ($catalogue as [$id, $cat, $name, $price]) {
             $stmt->execute(['id' => $id, 'cat' => $cat, 'name' => $name, 'price' => $price]);
+        }
+    }
+
+    private static function insertStaff(PDO $pdo): void
+    {
+        $roster = [
+            [1, 'Ada Lovelace',    'barista'],
+            [2, 'Ben Carson',      'barista'],
+            [3, 'Cleo Diaz',       'barista'],
+            [4, 'Devon Ellis',     'barista'],
+            [5, 'Farah Grant',     'shift_lead'],
+            [6, 'Hiro Yamamoto',   'manager'],
+        ];
+        $stmt = $pdo->prepare('INSERT INTO staff (id, name, role) VALUES (:id, :name, :role)');
+        foreach ($roster as [$id, $name, $role]) {
+            $stmt->execute(['id' => $id, 'name' => $name, 'role' => $role]);
         }
     }
 
@@ -128,6 +147,40 @@ final class Seed
                 }
                 $orderId++;
             }
+        }
+    }
+
+    private static function insertPayments(PDO $pdo): void
+    {
+        $rows = $pdo->query(
+            "SELECT o.id AS order_id, o.closed_at,
+                    COALESCE(SUM(oi.quantity * oi.unit_price_cents), 0) AS total_cents
+               FROM orders o
+          LEFT JOIN order_items oi ON oi.order_id = o.id
+              WHERE o.closed_at IS NOT NULL
+           GROUP BY o.id
+           ORDER BY o.id"
+        )->fetchAll(\PDO::FETCH_ASSOC);
+
+        $paymentStmt = $pdo->prepare(
+            'INSERT INTO payments (order_id, method, amount_cents, taken_at, staff_id)
+             VALUES (:oid, :method, :amount, :taken, :staff)'
+        );
+
+        $baristaIds = [1, 2, 3, 4];
+        $ordinal    = 0;
+        foreach ($rows as $r) {
+            $roll   = mt_rand(1, 100);
+            $method = $roll <= 55 ? 'card' : ($roll <= 85 ? 'cash' : 'mobile');
+            $staff  = $baristaIds[$ordinal % 4];
+            $paymentStmt->execute([
+                'oid'    => (int) $r['order_id'],
+                'method' => $method,
+                'amount' => (int) $r['total_cents'],
+                'taken'  => (string) $r['closed_at'],
+                'staff'  => $staff,
+            ]);
+            $ordinal++;
         }
     }
 
