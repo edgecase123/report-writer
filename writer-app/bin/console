@@ -5,6 +5,7 @@ declare(strict_types=1);
 
 require __DIR__ . '/../vendor/autoload.php';
 
+use ReportWriter\App\Config;
 use ReportWriter\App\Database\Seed;
 use ReportWriter\App\Database\SqliteConnectionFactory;
 
@@ -14,7 +15,14 @@ $command = $argv[1] ?? 'help';
 
 switch ($command) {
     case 'db:seed':
-        $path = getenv('SQLITE_PATH') ?: (__DIR__ . '/../data/report-writer.sqlite');
+        $config = Config::fromEnv();
+        $path   = $config->sqlitePath() ?? (__DIR__ . '/../data/report-writer.sqlite');
+
+        if (!preg_match('/\.(sqlite3?|db)$/', $path)) {
+            fwrite(STDERR, "Refusing to seed non-sqlite path: {$path}\n");
+            fwrite(STDERR, "SQLITE_PATH must end in .sqlite, .sqlite3, or .db\n");
+            exit(2);
+        }
 
         if (file_exists($path)) {
             fwrite(STDERR, "Removing existing DB at {$path}\n");

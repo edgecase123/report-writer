@@ -9,20 +9,26 @@ use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use ReportWriter\App\Reports\ReportRegistry;
 use ReportWriter\Interfaces\ReportFillerInterface;
-use ReportWriter\Layout\Flattener;
 use ReportWriter\Layout\LayoutService;
-use ReportWriter\Layout\PageConfig;
 use ReportWriter\Renderer\HtmlRenderer;
 
 final class ReportController
 {
     private ContainerInterface $container;
     private ReportRegistry $registry;
+    private LayoutService $layoutService;
+    private HtmlRenderer $renderer;
 
-    public function __construct(ContainerInterface $container, ReportRegistry $registry)
-    {
-        $this->container = $container;
-        $this->registry  = $registry;
+    public function __construct(
+        ContainerInterface $container,
+        ReportRegistry $registry,
+        LayoutService $layoutService,
+        HtmlRenderer $renderer
+    ) {
+        $this->container     = $container;
+        $this->registry      = $registry;
+        $this->layoutService = $layoutService;
+        $this->renderer      = $renderer;
     }
 
     /**
@@ -37,9 +43,8 @@ final class ReportController
         $params   = $request->getQueryParams();
         $instance = $filler->fill($params);
 
-        $pageConfig = new PageConfig();
-        $stream     = (new LayoutService(new Flattener(), $pageConfig))->layout($instance);
-        $html       = (new HtmlRenderer($pageConfig))->render($stream);
+        $stream = $this->layoutService->layout($instance);
+        $html   = $this->renderer->render($stream);
 
         $response->getBody()->write($html);
 
