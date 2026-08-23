@@ -13,6 +13,7 @@ node_modules/
 # Environment
 .env
 .env.local
+writer-app/.env
 
 # Build output
 /writer-app/public/build/

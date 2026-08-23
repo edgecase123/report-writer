@@ -1,0 +1,21 @@
+services:
+  report-writer-php:
+    container_name: report-writer-php
+    build:
+      context: ./writer-app
+      dockerfile: docker/php/Dockerfile
+    ports:
+      - "8090:80"
+    volumes:
+      - ./:/app
+      - ./writer-app/data:/app/writer-app/data
+    environment:
+      APP_ENV: ${APP_ENV:-dev}
+      APP_DEBUG: ${APP_DEBUG:-1}
+      SQLITE_PATH: ${SQLITE_PATH:-/app/writer-app/data/report-writer.sqlite}
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost/health"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+      start_period: 20s
