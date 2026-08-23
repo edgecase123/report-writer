@@ -4,19 +4,22 @@ declare(strict_types=1);
 
 namespace ReportWriter\App\Tests\Support;
 
+use ReportWriter\App\Container;
 use ReportWriter\App\Kernel;
 use Slim\App;
 
-/**
- * Builds a Slim App wired for in-process smoke testing.
- *
- * Later tasks add database/registry dependencies; this factory is the seam where
- * those are injected without any real HTTP.
- */
 final class AppFactory
 {
-    public static function buildTestApp(): App
+    /**
+     * @param callable(Container): void|null $overrides
+     *   Optional mutator that runs against the default container before app boot.
+     */
+    public static function buildTestApp(?callable $overrides = null): App
     {
-        return Kernel::buildApp();
+        $container = Kernel::defaultContainer();
+        if ($overrides !== null) {
+            $overrides($container);
+        }
+        return Kernel::buildApp($container);
     }
 }
