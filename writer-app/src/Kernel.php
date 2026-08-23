@@ -13,11 +13,13 @@ use ReportWriter\App\Http\ReportController;
 use ReportWriter\App\Reports\DailySalesFiller;
 use ReportWriter\App\Reports\DataSource\SqliteDailySalesProvider;
 use ReportWriter\App\Reports\DataSource\SqliteOpenTabsProvider;
+use ReportWriter\App\Reports\DataSource\SqliteSalesByCategoryItemProvider;
 use ReportWriter\App\Reports\DataSource\SqliteSalesByCategoryProvider;
 use ReportWriter\App\Reports\JsonTemplateRepository;
 use ReportWriter\App\Reports\ParamSpec;
 use ReportWriter\App\Reports\ReportDefinition;
 use ReportWriter\App\Reports\ReportRegistry;
+use ReportWriter\App\Reports\SalesByCategoryItemFiller;
 use ReportWriter\Fill\DefinitionFiller;
 use ReportWriter\Fill\DefinitionFillerFactory;
 use ReportWriter\Layout\Flattener;
@@ -81,6 +83,12 @@ final class Kernel
         $c->set(SqliteOpenTabsProvider::class,
             static fn (Container $c) => new SqliteOpenTabsProvider($c->get(PDO::class)));
 
+        $c->set(SqliteSalesByCategoryItemProvider::class,
+            static fn (Container $c) => new SqliteSalesByCategoryItemProvider($c->get(PDO::class)));
+
+        $c->set(SalesByCategoryItemFiller::class,
+            static fn (Container $c) => new SalesByCategoryItemFiller($c->get(SqliteSalesByCategoryItemProvider::class)));
+
         $c->set(FormatterRegistry::class,
             static fn () => FormatterRegistry::defaults());
 
@@ -140,6 +148,12 @@ final class Kernel
                 'Open Tabs',
                 'open-tabs.filler',
                 []
+            ),
+            new ReportDefinition(
+                'sales-by-category-item',
+                'Sales by Category → Item',
+                SalesByCategoryItemFiller::class,
+                [new ParamSpec('date', 'date', true)]
             ),
         ]));
 

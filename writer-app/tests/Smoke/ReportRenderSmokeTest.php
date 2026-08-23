@@ -66,6 +66,22 @@ final class ReportRenderSmokeTest extends TestCase
         $this->assertStringContainsString('Open Tabs', (string) $response->getBody());
     }
 
+    public function testSalesByCategoryItemRespondsWithHtml(): void
+    {
+        $pdo = DailySalesFixture::newPdo();
+
+        $app = AppFactory::buildTestApp(static function (Container $c) use ($pdo): void {
+            $c->set(PDO::class, static fn () => $pdo);
+        });
+
+        $request  = (new ServerRequestFactory())->createServerRequest('GET', '/api/reports/sales-by-category-item?date=2026-08-22');
+        $response = $app->handle($request);
+
+        $this->assertSame(200, $response->getStatusCode());
+        $this->assertStringStartsWith('text/html', $response->getHeaderLine('Content-Type'));
+        $this->assertStringContainsString('Sales by Category', (string) $response->getBody());
+    }
+
     public function testUnknownReportReturns404Json(): void
     {
         $pdo = DailySalesFixture::newPdo();
