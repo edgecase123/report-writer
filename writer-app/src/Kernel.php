@@ -12,6 +12,7 @@ use ReportWriter\App\Http\JsonErrorHandler;
 use ReportWriter\App\Http\ReportController;
 use ReportWriter\App\Reports\DailySalesFiller;
 use ReportWriter\App\Reports\DataSource\SqliteDailySalesProvider;
+use ReportWriter\App\Reports\DataSource\SqliteOpenTabsProvider;
 use ReportWriter\App\Reports\DataSource\SqliteSalesByCategoryProvider;
 use ReportWriter\App\Reports\JsonTemplateRepository;
 use ReportWriter\App\Reports\ParamSpec;
@@ -77,12 +78,16 @@ final class Kernel
         $c->set(SqliteSalesByCategoryProvider::class,
             static fn (Container $c) => new SqliteSalesByCategoryProvider($c->get(PDO::class)));
 
+        $c->set(SqliteOpenTabsProvider::class,
+            static fn (Container $c) => new SqliteOpenTabsProvider($c->get(PDO::class)));
+
         $c->set(FormatterRegistry::class,
             static fn () => FormatterRegistry::defaults());
 
         $c->set(DataSourceRegistry::class, static function (Container $c): DataSourceRegistry {
             $registry = new DataSourceRegistry();
             $registry->register('sales-by-category', $c->get(SqliteSalesByCategoryProvider::class));
+            $registry->register('open-tabs',         $c->get(SqliteOpenTabsProvider::class));
             return $registry;
         });
 
@@ -109,6 +114,14 @@ final class Kernel
             return $factory->create($repo->load('sales-by-category'));
         });
 
+        $c->set('open-tabs.filler', static function (Container $c): DefinitionFiller {
+            /** @var JsonTemplateRepository $repo */
+            $repo = $c->get(JsonTemplateRepository::class);
+            /** @var DefinitionFillerFactory $factory */
+            $factory = $c->get(DefinitionFillerFactory::class);
+            return $factory->create($repo->load('open-tabs'));
+        });
+
         $c->set(ReportRegistry::class, static fn () => new ReportRegistry([
             new ReportDefinition(
                 'daily-sales',
@@ -121,6 +134,12 @@ final class Kernel
                 'Sales by Category',
                 'sales-by-category.filler',
                 [new ParamSpec('date', 'date', true)]
+            ),
+            new ReportDefinition(
+                'open-tabs',
+                'Open Tabs',
+                'open-tabs.filler',
+                []
             ),
         ]));
 
