@@ -22,7 +22,7 @@ final class SqliteConnectionFactoryTest extends TestCase
         $tables = $pdo->query("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")
                        ->fetchAll(PDO::FETCH_COLUMN);
 
-        $this->assertSame(['categories', 'items', 'order_items', 'orders'], $tables);
+        $this->assertSame(['categories', 'items', 'order_items', 'orders', 'payments', 'staff'], $tables);
     }
 
     public function testCreatesFileBackedPdo(): void
