@@ -12,13 +12,20 @@ use ReportWriter\App\Http\JsonErrorHandler;
 use ReportWriter\App\Http\ReportController;
 use ReportWriter\App\Reports\DailySalesFiller;
 use ReportWriter\App\Reports\DataSource\SqliteDailySalesProvider;
+use ReportWriter\App\Reports\DataSource\SqliteSalesByCategoryProvider;
+use ReportWriter\App\Reports\JsonTemplateRepository;
 use ReportWriter\App\Reports\ParamSpec;
 use ReportWriter\App\Reports\ReportDefinition;
 use ReportWriter\App\Reports\ReportRegistry;
+use ReportWriter\Fill\DefinitionFiller;
+use ReportWriter\Fill\DefinitionFillerFactory;
 use ReportWriter\Layout\Flattener;
 use ReportWriter\Layout\LayoutService;
 use ReportWriter\Layout\PageConfig;
+use ReportWriter\Registry\DataSourceRegistry;
+use ReportWriter\Registry\FormatterRegistry;
 use ReportWriter\Renderer\HtmlRenderer;
+use ReportWriter\Template\TemplateLoader;
 use RuntimeException;
 use Slim\App;
 use Slim\Factory\AppFactory as SlimAppFactory;
@@ -67,11 +74,52 @@ final class Kernel
         $c->set(DailySalesFiller::class,
             static fn (Container $c) => new DailySalesFiller($c->get(SqliteDailySalesProvider::class)));
 
+        $c->set(SqliteSalesByCategoryProvider::class,
+            static fn (Container $c) => new SqliteSalesByCategoryProvider($c->get(PDO::class)));
+
+        $c->set(FormatterRegistry::class,
+            static fn () => FormatterRegistry::defaults());
+
+        $c->set(DataSourceRegistry::class, static function (Container $c): DataSourceRegistry {
+            $registry = new DataSourceRegistry();
+            $registry->register('sales-by-category', $c->get(SqliteSalesByCategoryProvider::class));
+            return $registry;
+        });
+
+        $c->set(DefinitionFillerFactory::class,
+            static fn (Container $c) => new DefinitionFillerFactory(
+                $c->get(DataSourceRegistry::class),
+                $c->get(FormatterRegistry::class)
+            ));
+
+        $c->set(TemplateLoader::class,
+            static fn () => new TemplateLoader());
+
+        $c->set(JsonTemplateRepository::class,
+            static fn (Container $c) => new JsonTemplateRepository(
+                __DIR__ . '/../templates',
+                $c->get(TemplateLoader::class)
+            ));
+
+        $c->set('sales-by-category.filler', static function (Container $c): DefinitionFiller {
+            /** @var JsonTemplateRepository $repo */
+            $repo = $c->get(JsonTemplateRepository::class);
+            /** @var DefinitionFillerFactory $factory */
+            $factory = $c->get(DefinitionFillerFactory::class);
+            return $factory->create($repo->load('sales-by-category'));
+        });
+
         $c->set(ReportRegistry::class, static fn () => new ReportRegistry([
             new ReportDefinition(
                 'daily-sales',
                 'Daily Sales',
                 DailySalesFiller::class,
+                [new ParamSpec('date', 'date', true)]
+            ),
+            new ReportDefinition(
+                'sales-by-category',
+                'Sales by Category',
+                'sales-by-category.filler',
                 [new ParamSpec('date', 'date', true)]
             ),
         ]));
