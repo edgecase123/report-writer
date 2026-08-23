@@ -24,6 +24,7 @@ Local ticket store — GitHub-issue-shaped so each file can be promoted to `edge
 | [014](014-implement-v1-layout-engine.md) | Implement v1 layout engine per `docs/architecture/` specs | Epic | design | Backlog |
 | [015](015-implement-user-scripting.md) | Implement user-scripting per `docs/architecture/user-scripting.md` | Epic | design | ❌ Superseded 2026-08-23 by extension-hooks.md + Ticket 016 |
 | [016](016-extension-hooks-lifecycle-plus-immutability-retrofit.md) | Add lifecycle hooks to ReportBuilder + DefinitionFiller (immutable-fluent); retrofit `onBand` immutability | Medium | design session 2026-08-23 | Open |
+| [018](018-pageconfig-right-margin-and-printable-width.md) | PageConfig missing right margin and printableWidth() | Medium | design 2026-08-23 | ✅ Closed (2026-08-23) |
 
 ## Fixed in the same session (no tickets — reference commits)
 

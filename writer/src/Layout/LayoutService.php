@@ -30,7 +30,7 @@ class LayoutService
         $pages       = [];
         $currentPage = new Page(1);
         $cursor      = $this->pageConfig->getMarginTop();
-        $usable      = $this->pageConfig->usableHeight();
+        $usable      = $this->pageConfig->printableHeight();
         $bottom      = $this->pageConfig->getMarginTop() + $usable;
 
         foreach ($bands as $band) {
