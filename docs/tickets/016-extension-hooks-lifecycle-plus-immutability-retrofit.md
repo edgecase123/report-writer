@@ -1,6 +1,6 @@
 # TICKET-016: Add lifecycle hooks to ReportBuilder + DefinitionFiller (immutable-fluent), retrofit `onBand` immutability
 
-**Status:** Open — design captured in `docs/architecture/extension-hooks.md`
+**Status:** ✅ Closed (2026-08-23) — shipped via PR #9 (`03634a2`)
 **Priority:** Medium (unblocks host apps that want lifecycle transforms without subclassing the shipped fillers)
 **Source:** design session 2026-08-23 — the "collapse user-scripting to hooks + named strategies" pivot
 **Scope:** `writer/src/Builder/ReportBuilder.php`, `writer/src/Fill/DefinitionFiller.php`, `writer/tests/**/*.php`
@@ -92,3 +92,14 @@ Callbacks that throw propagate up through `build()` / `fill()`. No try/catch in 
 - Supersedes: [Ticket 015](015-implement-user-scripting.md) — user-scripting design pivoted 2026-08-23 to hooks + named strategies; user-scripting.md marked superseded, extension-hooks.md replaces it
 - Partially reverses: [Ticket 006](006-definitionfiller-onband-immutability.md) — closed in A1 by dropping fluent return to `void`; now the honest fix (true immutability with `: self`) is applied
 - Design spec: `docs/architecture/extension-hooks.md`
+
+## Resolution
+
+Shipped 2026-08-23 via PR #9 (merge commit `03634a2`). Both `ReportBuilder`
+and `DefinitionFiller` gained 5 lifecycle hooks (`beforeFill`/`afterFill`
+on filler; `beforeBuild`/`afterBuild` on builder; `onBand` on both) with
+the immutable-fluent convention. `DefinitionFiller::onBand` was retrofitted
+from `: void` back to `: self` with clone-and-return semantics (properly
+immutable this time — supersedes Ticket 006's stopgap). 36 new tests added.
+Security docblocks (R5: code-only API, never construct callables from data)
+were added in a follow-up commit `f900919`.
