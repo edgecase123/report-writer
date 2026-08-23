@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace ReportWriter\Tests\Unit\Layout;
 
+use ReportWriter\Builder\Column;
+use ReportWriter\Builder\ReportBuilder;
 use ReportWriter\Exceptions\ElementExceedsPageException;
 use ReportWriter\Instance\BandInstance;
 use ReportWriter\Instance\Content\TextContent;
@@ -212,5 +214,34 @@ class LayoutServiceTest extends TestCase
         $this->assertCount(2, $pages);
         $this->assertSame(572.0, $pages[0]->getElements()[0]->getWidth(), 'first-chunk width must be resolved');
         $this->assertSame(572.0, $pages[1]->getElements()[0]->getWidth(), 'continuation-chunk width must be resolved');
+    }
+
+    public function testReportBuilderNarrowColumnsTitleStretchesToPrintableWidth(): void
+    {
+        // Regression test for Ticket 017.
+        // Build a report whose columns span only 380pt on a Letter page
+        // (printable width = 572pt). Assert the title's PositionedElement
+        // occupies the full printable area — width=572, x=20 (marginLeft).
+        $service = new LayoutService(
+            new Flattener(),
+            new PageConfig(612.0, 792.0, 20.0, 20.0, 20.0, 20.0)  // printableWidth=572
+        );
+
+        $report = ReportBuilder::create('narrow_report')
+            ->title('Narrow')
+            ->columns([
+                Column::make('a', 'A', 0.0,   120.0),
+                Column::make('b', 'B', 130.0, 120.0),
+                Column::make('c', 'C', 260.0, 120.0),
+            ])
+            ->build();
+
+        $positioned = $service->layout($report)->getPages()[0]->getElements();
+
+        // The first PositionedElement in the stream is the title element
+        // (title band placed at the top of the first page).
+        $this->assertSame('title', $positioned[0]->getInstanceId());
+        $this->assertSame(20.0,    $positioned[0]->getX(),     'title x must equal marginLeft');
+        $this->assertSame(572.0,   $positioned[0]->getWidth(), 'title width must equal printableWidth');
     }
 }
