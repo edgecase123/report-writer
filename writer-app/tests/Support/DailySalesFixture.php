@@ -19,7 +19,7 @@ use ReportWriter\App\Database\SqliteConnectionFactory;
  */
 final class DailySalesFixture
 {
-    public static function newPdo(): \PDO
+    public static function newPdo(): PDO
     {
         $pdo = SqliteConnectionFactory::createInMemoryWithSchema(
             __DIR__ . '/../../database/schema.sql'
