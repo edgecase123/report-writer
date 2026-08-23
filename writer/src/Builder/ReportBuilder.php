@@ -6,6 +6,7 @@ namespace ReportWriter\Builder;
 
 use ReportWriter\Expression\EvalContext;
 use ReportWriter\Expression\StaticExpression;
+use ReportWriter\Fill\BandContext;
 use ReportWriter\Instance\BandInstance;
 use ReportWriter\Instance\Content\TextContent;
 use ReportWriter\Instance\ElementInstance;
@@ -31,6 +32,13 @@ class ReportBuilder
 
     /** @var string[] */
     private array $groupKeys = [];
+
+    /** @var callable[] */
+    private array $beforeBuildCallbacks = [];
+    /** @var callable[] */
+    private array $afterBuildCallbacks = [];
+    /** @var array<string, callable[]> keyed by band-type ('title', 'col-header', 'detail', 'group-header', 'group-footer', 'summary') */
+    private array $bandCallbacks = [];
 
     private function __construct(string $reportId)
     {
@@ -80,39 +88,136 @@ class ReportBuilder
         return $clone;
     }
 
+    /**
+     * Register a callback that fires before `build()` constructs bands, receiving
+     * the rows array and returning a (possibly transformed) rows array.
+     *
+     * Immutable-fluent: returns a clone. Callers MUST reassign
+     * (`$b = $b->beforeBuild(...)`); fire-and-forget silently drops the callback.
+     *
+     * Non-nullable return type: to no-op, return the input unchanged.
+     *
+     * @param callable(array): array $callback
+     */
+    public function beforeBuild(callable $callback): self
+    {
+        $clone = clone $this;
+        $clone->beforeBuildCallbacks[] = $callback;
+        return $clone;
+    }
+
+    /**
+     * Register a callback that fires just before `build()` returns. Receives the
+     * ReportInstance and returns a (possibly transformed) ReportInstance.
+     *
+     * Immutable-fluent: returns a clone. Callers MUST reassign.
+     *
+     * Non-nullable return type: to no-op, return the input unchanged.
+     *
+     * @param callable(ReportInstance): ReportInstance $callback
+     */
+    public function afterBuild(callable $callback): self
+    {
+        $clone = clone $this;
+        $clone->afterBuildCallbacks[] = $callback;
+        return $clone;
+    }
+
+    /**
+     * Register a callback for a band-type. The callback fires after each band of
+     * the given type is built, before it is added to the report. Return null to
+     * suppress the band, or return a (modified) BandInstance to use instead.
+     *
+     * The `$bandType` key matches the band-TYPE string ('title', 'col-header',
+     * 'detail', 'group-header', 'group-footer', 'summary') — not a per-instance
+     * ID. Register once against 'detail' to fire for every detail band.
+     *
+     * Callbacks chain: each receives the output of the previous. If any returns
+     * null the band is suppressed and remaining callbacks are skipped.
+     *
+     * Immutable-fluent: returns a clone. Callers MUST reassign.
+     *
+     * @param callable(BandInstance, BandContext): ?BandInstance $callback
+     */
+    public function onBand(string $bandType, callable $callback): self
+    {
+        $clone = clone $this;
+        $clone->bandCallbacks[$bandType][] = $callback;
+        return $clone;
+    }
+
     public function build(): ReportInstance
     {
+        $rows = array_reduce(
+            $this->beforeBuildCallbacks,
+            fn ($acc, $cb) => $cb($acc),
+            $this->rows
+        );
+
         $bands = [];
 
         if ($this->titleText !== null) {
             $totalWidth = $this->totalWidth();
-            $bands[] = new BandInstance('band_title', 'title', [
+            $titleBand  = new BandInstance('band_title', 'title', [
                 new ElementInstance('title', 0.0, 0.0, $totalWidth, $this->titleHeight, new TextContent($this->titleText)),
             ]);
+            $titleBand = $this->applyBandCallbacks('title', $titleBand, new BandContext([], null, [], []));
+            if ($titleBand !== null) {
+                $bands[] = $titleBand;
+            }
         }
 
-        $bands[] = new BandInstance('band_col_hdr', 'col-header', $this->headerElements());
+        $colHdrBand = new BandInstance('band_col_hdr', 'col-header', $this->headerElements());
+        $colHdrBand = $this->applyBandCallbacks('col-header', $colHdrBand, new BandContext([], null, [], []));
+        if ($colHdrBand !== null) {
+            $bands[] = $colHdrBand;
+        }
 
         if (!empty($this->groupKeys)) {
-            $result = $this->buildGroupBands($this->rows, $this->groupKeys, 'g');
+            $result = $this->buildGroupBands($rows, $this->groupKeys, 'g');
             foreach ($result['bands'] as $b) {
                 $bands[] = $b;
             }
             $grandRows = $result['rows'];
         } else {
             $grandRows = [];
-            foreach ($this->rows as $rowIdx => $row) {
-                $bands[]     = new BandInstance("band_detail_r{$rowIdx}", 'detail', $this->detailElements("r{$rowIdx}", $row));
+            foreach ($rows as $rowIdx => $row) {
+                $detailBand = new BandInstance("band_detail_r{$rowIdx}", 'detail', $this->detailElements("r{$rowIdx}", $row));
+                $detailBand = $this->applyBandCallbacks('detail', $detailBand, new BandContext($row, null, [], []));
+                if ($detailBand !== null) {
+                    $bands[] = $detailBand;
+                }
                 $grandRows[] = $row;
             }
         }
 
-        $bands[] = new BandInstance(
+        $summaryBand = new BandInstance(
             'band_summary', 'summary',
             $this->summaryElements($grandRows)
         );
+        $summaryBand = $this->applyBandCallbacks('summary', $summaryBand, new BandContext([], null, $grandRows, []));
+        if ($summaryBand !== null) {
+            $bands[] = $summaryBand;
+        }
 
-        return new ReportInstance($this->reportId, $bands);
+        $instance = new ReportInstance($this->reportId, $bands);
+
+        return array_reduce(
+            $this->afterBuildCallbacks,
+            fn ($acc, $cb) => $cb($acc),
+            $instance
+        );
+    }
+
+    private function applyBandCallbacks(string $bandType, BandInstance $band, BandContext $ctx): ?BandInstance
+    {
+        foreach ($this->bandCallbacks[$bandType] ?? [] as $callback) {
+            $band = $callback($band, $ctx);
+            if ($band === null) {
+                return null;
+            }
+        }
+        return $band;
     }
 
     // ── Private helpers ───────────────────────────────────────────────────────
@@ -228,16 +333,28 @@ class ReportBuilder
         foreach (Grouping::byField($rows, $key) as $groupValue => $groupRows) {
             $safeId  = $prefix . $groupIdx++;
 
-            $bands[] = new BandInstance("band_grp_hdr_{$safeId}", 'group-header', [
+            $groupHdrBand = new BandInstance("band_grp_hdr_{$safeId}", 'group-header', [
                 new ElementInstance(
                     "grp_hdr_{$safeId}", 0.0, 0.0, $totalWidth, $this->groupHdrHeight,
                     new TextContent((string) $groupValue)
                 ),
             ]);
+            $groupHdrBand = $this->applyBandCallbacks(
+                'group-header',
+                $groupHdrBand,
+                new BandContext([], (string) $groupValue, $groupRows, [])
+            );
+            if ($groupHdrBand !== null) {
+                $bands[] = $groupHdrBand;
+            }
 
             if ($isLeaf) {
                 foreach ($groupRows as $rowIdx => $row) {
-                    $bands[]   = new BandInstance("band_detail_{$safeId}_r{$rowIdx}", 'detail', $this->detailElements("{$safeId}_r{$rowIdx}", $row));
+                    $detailBand = new BandInstance("band_detail_{$safeId}_r{$rowIdx}", 'detail', $this->detailElements("{$safeId}_r{$rowIdx}", $row));
+                    $detailBand = $this->applyBandCallbacks('detail', $detailBand, new BandContext($row, null, [], []));
+                    if ($detailBand !== null) {
+                        $bands[] = $detailBand;
+                    }
                     $allRows[] = $row;
                 }
                 $footerRows = $groupRows;
@@ -252,10 +369,18 @@ class ReportBuilder
                 $footerRows = $result['rows'];
             }
 
-            $bands[] = new BandInstance(
+            $groupFtrBand = new BandInstance(
                 "band_grp_ftr_{$safeId}", 'group-footer',
                 $this->footerElements("grp_ftr_{$safeId}", $footerRows, $this->groupFtrHeight)
             );
+            $groupFtrBand = $this->applyBandCallbacks(
+                'group-footer',
+                $groupFtrBand,
+                new BandContext([], (string) $groupValue, $footerRows, [])
+            );
+            if ($groupFtrBand !== null) {
+                $bands[] = $groupFtrBand;
+            }
         }
 
         return ['bands' => $bands, 'rows' => $allRows];

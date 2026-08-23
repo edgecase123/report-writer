@@ -24,6 +24,10 @@ class DefinitionFiller implements ReportFillerInterface
     private FormatterRegistry $formatters;
     /** @var array<string, callable[]> keyed by band definition id */
     private array $bandCallbacks = [];
+    /** @var callable[] */
+    private array $beforeFillCallbacks = [];
+    /** @var callable[] */
+    private array $afterFillCallbacks = [];
     /** @var array<string, array<int, array<string, mixed>>> */
     private array $rowCache = [];
 
@@ -45,21 +49,74 @@ class DefinitionFiller implements ReportFillerInterface
      * Callbacks chain: each receives the output of the previous. If any returns null
      * the band is suppressed and remaining callbacks are skipped.
      *
-     * This method mutates $this — it is NOT fluent. Call it and discard the return.
+     * Immutable-fluent: returns a clone. Callers MUST reassign
+     * (`$filler = $filler->onBand(...)`); fire-and-forget silently drops the callback.
      *
      * @param callable(BandInstance, BandContext): ?BandInstance $callback
      */
-    public function onBand(string $bandId, callable $callback): void
+    public function onBand(string $bandId, callable $callback): self
     {
-        $this->bandCallbacks[$bandId][] = $callback;
+        $clone = clone $this;
+        $clone->bandCallbacks[$bandId][] = $callback;
+        return $clone;
+    }
+
+    /**
+     * Register a callback that fires before the data source is queried, receiving
+     * the params array and returning a (possibly transformed) params array.
+     *
+     * Immutable-fluent: returns a clone. Callers MUST reassign. Chain via
+     * registration order — each callback receives the output of the previous.
+     *
+     * Non-nullable return type: to no-op, return the input unchanged. Returning
+     * null (or forgetting to return) raises TypeError at the next reducer step.
+     *
+     * @param callable(array): array $callback
+     */
+    public function beforeFill(callable $callback): self
+    {
+        $clone = clone $this;
+        $clone->beforeFillCallbacks[] = $callback;
+        return $clone;
+    }
+
+    /**
+     * Register a callback that fires after all bands are built, just before
+     * `fill()` returns. Receives the ReportInstance and returns a (possibly
+     * transformed) ReportInstance.
+     *
+     * Immutable-fluent: returns a clone. Callers MUST reassign. Chain via
+     * registration order — each callback receives the output of the previous.
+     *
+     * Non-nullable return type: to no-op, return the input unchanged.
+     *
+     * @param callable(ReportInstance): ReportInstance $callback
+     */
+    public function afterFill(callable $callback): self
+    {
+        $clone = clone $this;
+        $clone->afterFillCallbacks[] = $callback;
+        return $clone;
     }
 
     public function fill(array $params): ReportInstance
     {
+        $params = array_reduce(
+            $this->beforeFillCallbacks,
+            fn ($acc, $cb) => $cb($acc),
+            $params
+        );
+
         $this->validateParams($params);
         $this->rowCache = [];
         $bands = $this->buildBands($params);
-        return new ReportInstance($this->template->getReportDefinitionId(), $bands);
+        $instance = new ReportInstance($this->template->getReportDefinitionId(), $bands);
+
+        return array_reduce(
+            $this->afterFillCallbacks,
+            fn ($acc, $cb) => $cb($acc),
+            $instance
+        );
     }
 
     // ── Band building ─────────────────────────────────────────────────────────

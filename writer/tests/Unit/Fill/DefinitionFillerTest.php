@@ -309,7 +309,7 @@ class DefinitionFillerTest extends TestCase
             ['amount' => 0],
             ['amount' => 5],
         ]);
-        $filler->onBand('detail', function ($band, $ctx) {
+        $filler = $filler->onBand('detail', function ($band, $ctx) {
             return $ctx->getRow()['amount'] === 0 ? null : $band;
         });
 
@@ -330,7 +330,7 @@ class DefinitionFillerTest extends TestCase
 
         $seen = [];
         $filler = $this->filler($tmpl, [['name' => 'Alpha'], ['name' => 'Beta']]);
-        $filler->onBand('detail', function ($band, $ctx) use (&$seen) {
+        $filler = $filler->onBand('detail', function ($band, $ctx) use (&$seen) {
             $seen[] = $ctx->getRow()['name'];
             return $band;
         });
@@ -362,7 +362,7 @@ class DefinitionFillerTest extends TestCase
             ['cat' => 'A', 'amount' => 1],
             ['cat' => 'B', 'amount' => 2],
         ]);
-        $filler->onBand('grp_hdr', function ($band, $ctx) use (&$seen) {
+        $filler = $filler->onBand('grp_hdr', function ($band, $ctx) use (&$seen) {
             $seen[] = $ctx->getGroupValue();
             return $band;
         });
@@ -384,9 +384,9 @@ class DefinitionFillerTest extends TestCase
 
         $log = [];
         $filler = $this->filler($tmpl, [['name' => 'X']]);
-        $filler->onBand('detail', function ($band, $ctx) use (&$log) { $log[] = 'first'; return $band; });
-        $filler->onBand('detail', function ($band, $ctx) use (&$log) { $log[] = 'second'; return null; });
-        $filler->onBand('detail', function ($band, $ctx) use (&$log) { $log[] = 'third'; return $band; });
+        $filler = $filler->onBand('detail', function ($band, $ctx) use (&$log) { $log[] = 'first'; return $band; });
+        $filler = $filler->onBand('detail', function ($band, $ctx) use (&$log) { $log[] = 'second'; return null; });
+        $filler = $filler->onBand('detail', function ($band, $ctx) use (&$log) { $log[] = 'third'; return $band; });
 
         $bands = $filler->fill([])->getBandInstances();
         $this->assertCount(0, $bands);
@@ -405,7 +405,7 @@ class DefinitionFillerTest extends TestCase
         ];
 
         $filler = $this->filler($tmpl, []);
-        $filler->onBand('title', fn($band, $ctx) => null);
+        $filler = $filler->onBand('title', fn($band, $ctx) => null);
 
         $this->assertCount(0, $filler->fill([])->getBandInstances());
     }
@@ -424,7 +424,7 @@ class DefinitionFillerTest extends TestCase
         $rows = [['amount' => 10], ['amount' => 20]];
         $seen = [];
         $filler = $this->filler($tmpl, $rows);
-        $filler->onBand('summary', function ($band, $ctx) use (&$seen) {
+        $filler = $filler->onBand('summary', function ($band, $ctx) use (&$seen) {
             $seen = $ctx->getAggregateRows();
             return $band;
         });
