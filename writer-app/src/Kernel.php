@@ -15,6 +15,10 @@ use ReportWriter\App\Reports\DataSource\SqliteDailySalesProvider;
 use ReportWriter\App\Reports\ParamSpec;
 use ReportWriter\App\Reports\ReportDefinition;
 use ReportWriter\App\Reports\ReportRegistry;
+use ReportWriter\Layout\Flattener;
+use ReportWriter\Layout\LayoutService;
+use ReportWriter\Layout\PageConfig;
+use ReportWriter\Renderer\HtmlRenderer;
 use RuntimeException;
 use Slim\App;
 use Slim\Factory\AppFactory as SlimAppFactory;
@@ -72,8 +76,20 @@ final class Kernel
             ),
         ]));
 
+        $c->set(PageConfig::class,   static fn () => new PageConfig());
+        $c->set(Flattener::class,    static fn () => new Flattener());
+        $c->set(LayoutService::class,
+            static fn (Container $c) => new LayoutService($c->get(Flattener::class), $c->get(PageConfig::class)));
+        $c->set(HtmlRenderer::class,
+            static fn (Container $c) => new HtmlRenderer($c->get(PageConfig::class)));
+
         $c->set(ReportController::class,
-            static fn (Container $c) => new ReportController($c, $c->get(ReportRegistry::class)));
+            static fn (Container $c) => new ReportController(
+                $c,
+                $c->get(ReportRegistry::class),
+                $c->get(LayoutService::class),
+                $c->get(HtmlRenderer::class)
+            ));
 
         return $c;
     }
