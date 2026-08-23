@@ -23,6 +23,7 @@ Local ticket store — GitHub-issue-shaped so each file can be promoted to `edge
 | [013](013-brainstorm-structured-form-builder-subproject-b.md) | Brainstorm structured form builder (Sub-project B) | Epic | session-design | Blocked on Sub-project A |
 | [014](014-implement-v1-layout-engine.md) | Implement v1 layout engine per `docs/architecture/` specs | Epic | design | Backlog |
 | [015](015-implement-user-scripting.md) | Implement user-scripting per `docs/architecture/user-scripting.md` | Epic | design | Backlog |
+| [017](017-title-alignment-vs-columns-vs-page.md) | Title element width — columns extent vs printable page width | Low | design 2026-08-23 | Open |
 
 ## Fixed in the same session (no tickets — reference commits)
 
