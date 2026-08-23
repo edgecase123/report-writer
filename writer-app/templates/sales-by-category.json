@@ -1,0 +1,68 @@
+{
+  "report_definition_id": "sales-by-category",
+  "data_source": "sales-by-category",
+  "params": {
+    "date": { "type": "date", "required": true }
+  },
+  "bands": [
+    {
+      "id": "title",
+      "type": "title",
+      "elements": [
+        {
+          "id": "title_text",
+          "x": 0, "width": 0, "height": 24, "align": "center",
+          "content": { "type": "text", "value": "Sales by Category — {date}" }
+        }
+      ]
+    },
+    {
+      "id": "col_header",
+      "type": "col-header",
+      "elements": [
+        {
+          "id": "hdr_category",
+          "x": 0, "width": 300, "height": 16, "align": "left",
+          "content": { "type": "text", "value": "Category" }
+        },
+        {
+          "id": "hdr_total",
+          "x": 300, "width": 180, "height": 16, "align": "right",
+          "content": { "type": "text", "value": "Total" }
+        }
+      ]
+    },
+    {
+      "id": "detail",
+      "type": "detail",
+      "elements": [
+        {
+          "id": "category",
+          "x": 0, "width": 300, "height": 14, "align": "left",
+          "content": { "type": "field", "field": "category_name" }
+        },
+        {
+          "id": "total",
+          "x": 300, "width": 180, "height": 14, "align": "right",
+          "content": { "type": "field", "field": "total_cents", "format": "cents" }
+        }
+      ]
+    },
+    {
+      "id": "summary",
+      "type": "summary",
+      "elements": [
+        {
+          "id": "grand_total_label",
+          "x": 0, "width": 300, "height": 16, "align": "right",
+          "content": { "type": "text", "value": "Grand Total" }
+        },
+        {
+          "id": "grand_total",
+          "x": 300, "width": 180, "height": 16, "align": "right",
+          "content": { "type": "aggregate", "field": "total_cents", "fn": "sum", "format": "cents" }
+        }
+      ]
+    }
+  ]
+}
