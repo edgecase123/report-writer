@@ -26,6 +26,8 @@ Local ticket store — GitHub-issue-shaped so each file can be promoted to `edge
 | [016](016-extension-hooks-lifecycle-plus-immutability-retrofit.md) | Add lifecycle hooks to ReportBuilder + DefinitionFiller (immutable-fluent); retrofit `onBand` immutability | Medium | design session 2026-08-23 | ✅ Closed (2026-08-23) |
 | [017](017-title-alignment-vs-columns-vs-page.md) | Title element width — columns extent vs printable page width | Low | design 2026-08-23 | ✅ Closed (2026-08-23) |
 | [018](018-pageconfig-right-margin-and-printable-width.md) | PageConfig missing right margin and printableWidth() | Medium | design 2026-08-23 | ✅ Closed (2026-08-23) |
+| [019](019-viewer-zoom-recentering.md) | Viewer should re-center the report when zoom changes | Medium | manual test 2026-08-23 (PR #14 follow-up) | Open |
+| [020](020-viewer-drag-to-pan-hand-cursor.md) | Viewer needs drag-to-pan with hand-grab cursor when zoomed | Medium | manual test 2026-08-23 (PR #14 follow-up) | Open |
 
 ## Fixed in the same session (no tickets — reference commits)
 
