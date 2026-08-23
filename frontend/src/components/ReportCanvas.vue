@@ -94,12 +94,12 @@ async function load(): Promise<void> {
             .map((s) => s.outerHTML)
             .join('\n');
 
-        // Extract base page dimensions from the first .fu-page element's inline
+        // Extract base page dimensions from the first .rw-page element's inline
         // style. HtmlRenderer::renderPage emits e.g. style="width:612.00pt;height:792.00pt;".
         // These dimensions size the .report-scaler wrapper so the scroll
         // container reserves the correct horizontal space at any zoom level
         // (Ticket 007 — reserved-width wrapper approach).
-        const firstPage = doc.querySelector('.fu-page') as HTMLElement | null;
+        const firstPage = doc.querySelector('.rw-page') as HTMLElement | null;
         if (firstPage) {
             const w = parsePtLength(firstPage.style.width);
             const h = parsePtLength(firstPage.style.height);
@@ -107,14 +107,14 @@ async function load(): Promise<void> {
             basePageHeight.value = h ?? DEFAULT_PAGE_HEIGHT;
             if (w === null || h === null) {
                 console.warn(
-                    '[ReportCanvas] .fu-page found but width/height style unparsable; falling back to US Letter (612x792).'
+                    '[ReportCanvas] .rw-page found but width/height style unparsable; falling back to US Letter (612x792).'
                 );
             }
         } else {
             basePageWidth.value  = DEFAULT_PAGE_WIDTH;
             basePageHeight.value = DEFAULT_PAGE_HEIGHT;
             console.warn(
-                '[ReportCanvas] No .fu-page element in report HTML; falling back to US Letter (612x792) for scaler dimensions.'
+                '[ReportCanvas] No .rw-page element in report HTML; falling back to US Letter (612x792) for scaler dimensions.'
             );
         }
 
@@ -176,8 +176,8 @@ let activePointerId: number | null = null;
 
 function isTextTarget(target: EventTarget | null): boolean {
     // Report HTML from HtmlRenderer places each text value in its own leaf
-    // <div class="fu-el ..."> whose direct child is a Text node. Container
-    // elements (.viewer-canvas, .report-scaler, .report-inner, .fu-page) have
+    // <div class="rw-el ..."> whose direct child is a Text node. Container
+    // elements (.viewer-canvas, .report-scaler, .report-inner, .rw-page) have
     // element children only. So "clicked on text" ≡ "target has a direct
     // TEXT_NODE child with non-whitespace content." caretPositionFromPoint
     // was tried first but snaps to the nearest text even for background

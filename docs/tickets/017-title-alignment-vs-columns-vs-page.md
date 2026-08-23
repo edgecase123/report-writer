@@ -16,7 +16,7 @@ $bands[] = new BandInstance('band_title', 'title', [
 ]);
 ```
 
-`totalWidth()` returns `max(column.x + column.width)` across all columns. The library's default StyleMap (`writer/src/Renderer/StyleMap.php:38-43`) applies `text-align: center` to `.fu-band-title`.
+`totalWidth()` returns `max(column.x + column.width)` across all columns. The library's default StyleMap (`writer/src/Renderer/StyleMap.php:38-43`) applies `text-align: center` to `.rw-band-title`.
 
 Consequence: the title centers within the columns-extent box, not the printable-page-width area. On reports where columns are narrower than the printable area (e.g. three 120pt columns on a Letter page with 20pt margins → columns span 380pt, printable area is ~572pt), the title visually appears left-of-page-center by ~96pt.
 

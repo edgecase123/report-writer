@@ -76,7 +76,7 @@ class HtmlRendererTest extends TestCase
         $stream = $pipeline->run($filler);
         $html   = (new HtmlRenderer($config))->render($stream);
 
-        $this->assertSame(2, substr_count($html, 'class="fu-page"'));
+        $this->assertSame(2, substr_count($html, 'class="rw-page"'));
         $this->assertStringContainsString('data-page="1"', $html);
         $this->assertStringContainsString('data-page="2"', $html);
         $this->assertStringContainsString('Page one', $html);
@@ -156,7 +156,7 @@ class HtmlRendererTest extends TestCase
         $html   = (new HtmlRenderer($config, \ReportWriter\Renderer\StyleMap::defaults()))->render($stream);
 
         // The overlay div spans full width despite the gap between elements
-        $this->assertStringContainsString('fu-band-overlay', $html);
+        $this->assertStringContainsString('rw-band-overlay', $html);
         $this->assertStringContainsString('border-bottom', $html);
         $this->assertStringContainsString('width:100%', $html);
     }
