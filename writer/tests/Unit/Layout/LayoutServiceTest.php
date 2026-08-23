@@ -169,7 +169,7 @@ class LayoutServiceTest extends TestCase
         // PageConfig: width=612, marginLeft=20, marginRight=20 → printableWidth=572
         $service = new LayoutService(
             new Flattener(),
-            new PageConfig(612.0, 792.0, 20.0, 20.0, 20.0, 20.0)
+            new PageConfig(612.0, 792.0, 20.0, 20.0, 20.0, 20.0)  // printableWidth=572
         );
 
         $el     = new ElementInstance('sentinel', 0.0, 0.0, 0.0, 20.0, new TextContent('X'));
@@ -184,7 +184,7 @@ class LayoutServiceTest extends TestCase
     {
         $service = new LayoutService(
             new Flattener(),
-            new PageConfig(612.0, 792.0, 20.0, 20.0, 20.0, 20.0)
+            new PageConfig(612.0, 792.0, 20.0, 20.0, 20.0, 20.0)  // printableWidth=572
         );
 
         $el     = new ElementInstance('fixed', 0.0, 0.0, 300.0, 20.0, new TextContent('X'));
