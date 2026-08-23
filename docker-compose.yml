@@ -11,7 +11,7 @@ services:
       - ./writer-app/data:/app/writer-app/data
     environment:
       APP_ENV: ${APP_ENV:-dev}
-      APP_DEBUG: ${APP_DEBUG:-1}
+      APP_DEBUG: ${APP_DEBUG:-0}
       SQLITE_PATH: ${SQLITE_PATH:-/app/writer-app/data/report-writer.sqlite}
     healthcheck:
       test: ["CMD", "curl", "-fsS", "http://localhost/health"]

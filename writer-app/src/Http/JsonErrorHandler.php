@@ -38,8 +38,11 @@ final class JsonErrorHandler
             $error['trace']   = $exception->getTraceAsString();
         }
 
+        $json = json_encode(['error' => $error], JSON_INVALID_UTF8_SUBSTITUTE)
+            ?: '{"error":{"status":500,"message":"Internal server error"}}';
+
         $response = $this->responseFactory->createResponse($status);
-        $response->getBody()->write(json_encode(['error' => $error]));
+        $response->getBody()->write($json);
 
         return $response->withHeader('Content-Type', 'application/json');
     }
