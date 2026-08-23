@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ReportWriter\App\Tests\Support;
 
 use PDO;
+use ReportWriter\App\Database\SqliteConnectionFactory;
 
 /**
  * Inserts a deterministic mini-dataset used by A2's unit + smoke tests.
@@ -18,6 +19,15 @@ use PDO;
  */
 final class DailySalesFixture
 {
+    public static function newPdo(): \PDO
+    {
+        $pdo = SqliteConnectionFactory::createInMemoryWithSchema(
+            __DIR__ . '/../../database/schema.sql'
+        );
+        self::load($pdo);
+        return $pdo;
+    }
+
     public static function load(PDO $pdo): void
     {
         $pdo->exec("INSERT INTO categories (id, name) VALUES (1, 'Coffee'), (2, 'Pastry')");

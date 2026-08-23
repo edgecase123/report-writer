@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace ReportWriter\App\Tests\Unit\Reports\DataSource;
 
 use PHPUnit\Framework\TestCase;
-use ReportWriter\App\Database\SqliteConnectionFactory;
 use ReportWriter\App\Reports\DataSource\SqliteDailySalesProvider;
 use ReportWriter\App\Tests\Support\DailySalesFixture;
 
@@ -13,10 +12,7 @@ final class SqliteDailySalesProviderTest extends TestCase
 {
     public function testReturnsRowsForRequestedDateExcludingOpenAndOtherDates(): void
     {
-        $pdo = SqliteConnectionFactory::createInMemoryWithSchema(
-            __DIR__ . '/../../../../database/schema.sql'
-        );
-        DailySalesFixture::load($pdo);
+        $pdo = DailySalesFixture::newPdo();
 
         $provider = new SqliteDailySalesProvider($pdo);
         $rows     = $provider->fetchRows(['date' => '2026-08-22']);
@@ -33,10 +29,7 @@ final class SqliteDailySalesProviderTest extends TestCase
 
     public function testReturnsEmptyArrayForDateWithNoClosedOrders(): void
     {
-        $pdo = SqliteConnectionFactory::createInMemoryWithSchema(
-            __DIR__ . '/../../../../database/schema.sql'
-        );
-        DailySalesFixture::load($pdo);
+        $pdo = DailySalesFixture::newPdo();
 
         $provider = new SqliteDailySalesProvider($pdo);
         $this->assertSame([], $provider->fetchRows(['date' => '2020-01-01']));
