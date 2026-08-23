@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace ReportWriter\Builder;
 
+use ReportWriter\Expression\ContentExpression;
 use ReportWriter\Expression\EvalContext;
 use ReportWriter\Expression\StaticExpression;
 use ReportWriter\Fill\BandContext;
@@ -245,32 +246,23 @@ class ReportBuilder
     /** @return ElementInstance[] */
     private function headerElements(): array
     {
-        $elements = [];
-        foreach ($this->columns as $col) {
-            [$elX, $elW] = $this->applyMargin($col);
-            $elements[] = new ElementInstance(
-                'ch_' . $col->getId(), $elX, 0.0, $elW, $this->headerHeight,
-                new TextContent((new StaticExpression($col->getHeader()))->evaluate(new EvalContext())),
-                $col->getTextAlign()
-            );
-        }
-        return $elements;
+        return $this->buildRowElements(
+            'ch',
+            new EvalContext(),
+            fn (Column $col) => new StaticExpression($col->getHeader()),
+            $this->headerHeight
+        );
     }
 
     /** @return ElementInstance[] */
     private function detailElements(string $prefix, array $row): array
     {
-        $ctx      = new EvalContext($row, [], []);
-        $elements = [];
-        foreach ($this->columns as $col) {
-            [$elX, $elW] = $this->applyMargin($col);
-            $elements[] = new ElementInstance(
-                "{$prefix}_{$col->getId()}", $elX, 0.0, $elW, $this->rowHeight,
-                new TextContent($col->getDetailExpr()->evaluate($ctx)),
-                $col->getTextAlign()
-            );
-        }
-        return $elements;
+        return $this->buildRowElements(
+            $prefix,
+            new EvalContext($row, [], []),
+            fn (Column $col) => $col->getDetailExpr(),
+            $this->rowHeight
+        );
     }
 
     /**
@@ -279,19 +271,12 @@ class ReportBuilder
      */
     private function footerElements(string $prefix, array $rows, float $height): array
     {
-        $ctx      = new EvalContext([], $rows, []);
-        $elements = [];
-        foreach ($this->columns as $col) {
-            [$elX, $elW] = $this->applyMargin($col);
-            $expr        = $col->getFooterExpr();
-            $text        = $expr !== null ? $expr->evaluate($ctx) : '';
-            $elements[]  = new ElementInstance(
-                "{$prefix}_{$col->getId()}", $elX, 0.0, $elW, $height,
-                new TextContent($text),
-                $col->getTextAlign()
-            );
-        }
-        return $elements;
+        return $this->buildRowElements(
+            $prefix,
+            new EvalContext([], $rows, []),
+            fn (Column $col) => $col->getFooterExpr(),
+            $height
+        );
     }
 
     /**
@@ -300,14 +285,35 @@ class ReportBuilder
      */
     private function summaryElements(array $rows): array
     {
-        $ctx      = new EvalContext([], $rows, []);
+        return $this->buildRowElements(
+            'summary',
+            new EvalContext([], $rows, []),
+            fn (Column $col) => $col->getSummaryExpr(),
+            $this->summaryHeight
+        );
+    }
+
+    /**
+     * Builds one ElementInstance per column, using $exprFor to select which
+     * expression to evaluate per column. Extracted from the 4 near-identical
+     * *Elements() loops (see Ticket 003).
+     *
+     * @param callable(Column): ?ContentExpression $exprFor
+     * @return ElementInstance[]
+     */
+    private function buildRowElements(
+        string $idPrefix,
+        EvalContext $ctx,
+        callable $exprFor,
+        float $height
+    ): array {
         $elements = [];
         foreach ($this->columns as $col) {
             [$elX, $elW] = $this->applyMargin($col);
-            $expr        = $col->getSummaryExpr();
+            $expr        = $exprFor($col);
             $text        = $expr !== null ? $expr->evaluate($ctx) : '';
             $elements[]  = new ElementInstance(
-                "summary_{$col->getId()}", $elX, 0.0, $elW, $this->summaryHeight,
+                "{$idPrefix}_{$col->getId()}", $elX, 0.0, $elW, $height,
                 new TextContent($text),
                 $col->getTextAlign()
             );

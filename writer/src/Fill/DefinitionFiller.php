@@ -263,30 +263,41 @@ class DefinitionFiller implements ReportFillerInterface
 
     private function staticBand(BandTemplate $def, array $params, ?string $groupValue): BandInstance
     {
-        $bandId   = 'band_' . $def->getId() . ($groupValue !== null ? '_' . $this->safeId($groupValue) : '');
-        $elements = [];
-        foreach ($def->getElements() as $elDef) {
-            $elements[] = $this->resolveElement($elDef, [], [], $groupValue, $params, $bandId);
-        }
-        return new BandInstance($bandId, $def->getType(), $elements, null, $def->getRowSpacing());
+        return $this->buildBand($def, [], [], $groupValue, $params, $groupValue);
     }
 
     private function rowBand(BandTemplate $def, array $row, string $rowKey, array $params): BandInstance
     {
-        $bandId   = 'band_' . $def->getId() . '_' . $this->safeId($rowKey);
-        $elements = [];
-        foreach ($def->getElements() as $elDef) {
-            $elements[] = $this->resolveElement($elDef, $row, [], null, $params, $bandId);
-        }
-        return new BandInstance($bandId, $def->getType(), $elements, null, $def->getRowSpacing());
+        return $this->buildBand($def, $row, [], null, $params, $rowKey);
     }
 
     private function aggregateBand(BandTemplate $def, array $rows, array $params, ?string $groupValue): BandInstance
     {
-        $bandId   = 'band_' . $def->getId() . ($groupValue !== null ? '_' . $this->safeId($groupValue) : '');
+        return $this->buildBand($def, [], $rows, $groupValue, $params, $groupValue);
+    }
+
+    /**
+     * Builds one BandInstance for the given band template. All three
+     * band flavors (static, row, aggregate) funnel through here; each caller
+     * passes the arguments meaningful for its band type and empty defaults
+     * for the rest. Extracted from the 3 near-identical *Band methods
+     * (see Ticket 004).
+     *
+     * @param array<int, array<string, mixed>> $aggregateRows
+     * @param array<string, mixed> $params
+     */
+    private function buildBand(
+        BandTemplate $def,
+        array $row,
+        array $aggregateRows,
+        ?string $groupValue,
+        array $params,
+        ?string $keySuffix
+    ): BandInstance {
+        $bandId   = 'band_' . $def->getId() . ($keySuffix !== null ? '_' . $this->safeId($keySuffix) : '');
         $elements = [];
         foreach ($def->getElements() as $elDef) {
-            $elements[] = $this->resolveElement($elDef, [], $rows, $groupValue, $params, $bandId);
+            $elements[] = $this->resolveElement($elDef, $row, $aggregateRows, $groupValue, $params, $bandId);
         }
         return new BandInstance($bandId, $def->getType(), $elements, null, $def->getRowSpacing());
     }

@@ -4,13 +4,10 @@ declare(strict_types=1);
 
 namespace ReportWriter\Expression;
 
-final class ComputedExpression implements ContentExpression
+final class ComputedExpression extends AbstractFormattableExpression
 {
     /** @var callable */
     private $fn;
-
-    /** @var callable|null */
-    private $formatter;
 
     public function __construct(callable $fn, ?callable $formatter = null)
     {
@@ -21,9 +18,6 @@ final class ComputedExpression implements ContentExpression
     public function evaluate(EvalContext $ctx): string
     {
         $value = ($this->fn)($ctx);
-        if ($this->formatter !== null) {
-            return (string) ($this->formatter)($value);
-        }
-        return (string) $value;
+        return $this->applyFormatter($value);
     }
 }
