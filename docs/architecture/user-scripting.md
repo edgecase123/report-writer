@@ -49,7 +49,7 @@ Backend scripts live in the filesystem — inside the host app's codebase, insid
 - `./relative/path` — from the host app's configured scripts base directory. Path resolution is deterministic and validated against the base (no `..` escapes).
 - Bare names (`foo`, `some-hook`) are **not supported** — always explicit, no magic.
 
-The local alias (LHS of the map) is scoped to this report. Two reports can import the same script under different names; a report can import two different scripts under the same alias (though it can't — importing the same alias twice is a template error).
+The local alias (LHS of the map) is scoped to this report. Two reports can import the same script under different aliases, and two reports can independently use the same alias for different scripts. Within a single report, however, each alias must be unique — reusing an alias in the same `imports` block is a template error.
 
 **Trust context.** The author of a report template controls what scripts run for that template — but only from the pool of scripts that exist in the codebase. Adding a new importable script to that pool requires server-level access (dropping a file, installing a package). A hostile template author can only import scripts that are already installed; they can't inject new code.
 
