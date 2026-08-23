@@ -16,9 +16,8 @@ if (class_exists(Seed::class, false)) {
  * Deterministic coffee-shop seed for the demo.
  *
  * Contract per ADR-002: mt_srand(1); ~90 days of activity ending on a fixed
- * anchor date (2026-08-22 UTC). Reads/writes only the 4 tables A2 defines
- * (categories, items, orders, order_items). A3 extends this to cover staff,
- * payments, and the remaining reports' data needs.
+ * anchor date (2026-08-22 UTC). Populates categories, items, staff, orders,
+ * order_items, payments. A5 will add template_drafts.
  */
 final class Seed
 {
@@ -36,6 +35,7 @@ final class Seed
             self::wipe($pdo);
             self::insertCategories($pdo);
             self::insertItems($pdo);
+            self::insertStaff($pdo);
             self::insertOrdersAndItems($pdo);
             $pdo->commit();
         } catch (\Throwable $e) {
@@ -46,9 +46,11 @@ final class Seed
 
     private static function wipe(PDO $pdo): void
     {
+        $pdo->exec('DELETE FROM payments');
         $pdo->exec('DELETE FROM order_items');
         $pdo->exec('DELETE FROM orders');
         $pdo->exec('DELETE FROM items');
+        $pdo->exec('DELETE FROM staff');
         $pdo->exec('DELETE FROM categories');
     }
 
@@ -84,6 +86,22 @@ final class Seed
         );
         foreach ($catalogue as [$id, $cat, $name, $price]) {
             $stmt->execute(['id' => $id, 'cat' => $cat, 'name' => $name, 'price' => $price]);
+        }
+    }
+
+    private static function insertStaff(PDO $pdo): void
+    {
+        $roster = [
+            [1, 'Ada Lovelace',    'barista'],
+            [2, 'Ben Carson',      'barista'],
+            [3, 'Cleo Diaz',       'barista'],
+            [4, 'Devon Ellis',     'barista'],
+            [5, 'Farah Grant',     'shift_lead'],
+            [6, 'Hiro Yamamoto',   'manager'],
+        ];
+        $stmt = $pdo->prepare('INSERT INTO staff (id, name, role) VALUES (:id, :name, :role)');
+        foreach ($roster as [$id, $name, $role]) {
+            $stmt->execute(['id' => $id, 'name' => $name, 'role' => $role]);
         }
     }
 
