@@ -1,11 +1,13 @@
 ---
-title: User Scripting in Band Hooks and Content Expressions (future direction)
+title: User Scripting (superseded — see extension-hooks.md)
 updated: 2026-08-23
-status: language space decided (frontend JS/TS; backend PHP or JS/TS via pluggable ScriptRuntime, PHP-only in v1); sandbox mechanism TBD
-scope: future major version; explicitly OUT OF SCOPE for Sub-project A (the standalone build)
+status: SUPERSEDED 2026-08-23 — extension happens via host-app hooks and named strategies, not user-authored scripts. Retained for the threat model + rejected-mechanism analysis.
+scope: reference-only; not implemented, not planned
 ---
 
-> **Status.** Hard requirement for a future version, per user direction 2026-08-22. Not designed. Not implemented. Not on the immediate roadmap. This document exists so the requirement doesn't get lost, so the design surface is thought about before code decisions foreclose options, and so anyone reading the security-scanner agent's Rule R5 ("never map JSON → PHP callable") knows the rule is a *current* rule with a planned safe path around it, not a permanent architectural veto.
+> **⚠️ Superseded.** As of 2026-08-23, user-authored scripting is out of scope on both the backend and the frontend. Extension of the pipeline happens via host-app PHP hooks on the builder/filler surface, and JSON templates reference code-registered strategies by name. See [`extension-hooks.md`](extension-hooks.md).
+>
+> This document is retained because the security analysis (trust boundaries, sandbox mechanism trade-offs, Rule R5 discussion) remains valuable reference material. The design surface described below — sandbox runtime, ScriptRuntime abstraction, imports blocks, PHP AST whitelisting, frontend template scripting — is no longer being pursued.
 
 ---
 
