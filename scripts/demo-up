@@ -1,0 +1,71 @@
+#!/usr/bin/env bash
+#
+# scripts/demo-up — bring up the report-writer demo stack end-to-end.
+#
+# Usage:
+#   scripts/demo-up               # docker up + composer install + reseed DB (default)
+#   scripts/demo-up --no-reseed   # docker up + composer install; preserve existing DB
+#   scripts/demo-up --help
+#
+# Requires Docker Desktop or equivalent.
+
+set -euo pipefail
+
+REPO_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+cd "$REPO_ROOT"
+
+RESEED=1
+for arg in "$@"; do
+    case "$arg" in
+        --no-reseed)
+            RESEED=0
+            ;;
+        -h|--help)
+            sed -n '3,10p' "$0" | sed 's/^# \{0,1\}//'
+            exit 0
+            ;;
+        *)
+            echo "Unknown argument: $arg (see --help)" >&2
+            exit 2
+            ;;
+    esac
+done
+
+echo "==> docker compose up -d report-writer-php"
+docker compose up -d report-writer-php
+
+echo "==> waiting for container to become healthy (up to 60s)"
+for i in $(seq 1 30); do
+    status="$(docker inspect --format '{{.State.Health.Status}}' report-writer-php 2>/dev/null || echo missing)"
+    if [ "$status" = "healthy" ]; then
+        echo "    healthy"
+        break
+    fi
+    if [ "$i" = "30" ]; then
+        echo "    never became healthy (last status: $status)" >&2
+        docker logs --tail 40 report-writer-php >&2 || true
+        exit 1
+    fi
+    sleep 2
+done
+
+echo "==> composer install (in container)"
+docker exec report-writer-php composer install --working-dir=/app/writer-app --no-interaction
+
+if [ "$RESEED" = "1" ]; then
+    echo "==> db:seed (in container)"
+    docker exec report-writer-php php /app/writer-app/bin/console db:seed
+else
+    echo "==> skipping db:seed (--no-reseed given)"
+fi
+
+cat <<'INFO'
+
+Demo is up. Try these URLs:
+
+    Health:       http://localhost:8090/health
+    Daily Sales:  http://localhost:8090/api/reports/daily-sales?date=2026-08-22
+    404 example:  http://localhost:8090/api/reports/nope
+
+Tear down when done:  docker compose down
+INFO
