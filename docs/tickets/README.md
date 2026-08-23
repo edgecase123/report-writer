@@ -16,14 +16,14 @@ Local ticket store — GitHub-issue-shaped so each file can be promoted to `edge
 | [006](006-definitionfiller-onband-immutability.md) | Fix `DefinitionFiller::onBand` fluent-returns-but-mutates | Medium | dry-solid-reviewer | ✅ Closed (A1) |
 | [007](007-zoom-transform-origin-scroll-bug.md) | Fix zoom transform-origin causing unreachable overflow at >100% | Medium | frontend-designer | Open |
 | [008](008-add-vue-tsc-typecheck-step.md) | Add `vue-tsc --noEmit` step to `npm run build` | Medium | frontend-designer | Open |
-| [009](009-verify-page-margin-print-rule.md) | Verify or add `@page { margin: 0 }` for print output | Low | frontend-designer | Open |
+| [009](009-verify-page-margin-print-rule.md) | Verify or add `@page { margin: 0 }` for print output | Low | frontend-designer | ✅ Closed (2026-08-23) |
 | [010](010-library-rename-to-edgecase.md) | Rename library from `foreup/reporting` → `edgecase123/report-writer` | Medium | session-design | ✅ Closed (A1) |
 | [011](011-zoom-preset-placeholder-behavior.md) | Zoom preset dropdown — decide on placeholder behavior | Low | frontend-designer | Open |
-| [012](012-implement-standalone-runtime-subproject-a.md) | Implement standalone runtime (Sub-project A) per approved design | Epic | session-design | Blocked on A1 landing (done) → ready to plan A2 |
+| [012](012-implement-standalone-runtime-subproject-a.md) | Implement standalone runtime (Sub-project A) per approved design | Epic | session-design | In progress — A1 + A2 shipped 2026-08-22; A3–A7 remaining |
 | [013](013-brainstorm-structured-form-builder-subproject-b.md) | Brainstorm structured form builder (Sub-project B) | Epic | session-design | Blocked on Sub-project A |
 | [014](014-implement-v1-layout-engine.md) | Implement v1 layout engine per `docs/architecture/` specs | Epic | design | Backlog |
 | [015](015-implement-user-scripting.md) | Implement user-scripting per `docs/architecture/user-scripting.md` | Epic | design | ❌ Superseded 2026-08-23 by extension-hooks.md + Ticket 016 |
-| [016](016-extension-hooks-lifecycle-plus-immutability-retrofit.md) | Add lifecycle hooks to ReportBuilder + DefinitionFiller (immutable-fluent); retrofit `onBand` immutability | Medium | design session 2026-08-23 | Open |
+| [016](016-extension-hooks-lifecycle-plus-immutability-retrofit.md) | Add lifecycle hooks to ReportBuilder + DefinitionFiller (immutable-fluent); retrofit `onBand` immutability | Medium | design session 2026-08-23 | ✅ Closed (2026-08-23) |
 | [017](017-title-alignment-vs-columns-vs-page.md) | Title element width — columns extent vs printable page width | Low | design 2026-08-23 | ✅ Closed (2026-08-23) |
 | [018](018-pageconfig-right-margin-and-printable-width.md) | PageConfig missing right margin and printableWidth() | Medium | design 2026-08-23 | ✅ Closed (2026-08-23) |
 

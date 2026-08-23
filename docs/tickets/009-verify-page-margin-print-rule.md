@@ -1,5 +1,6 @@
 # TICKET-009: Verify or add `@page { margin: 0 }` for print output
 
+**Status:** ✅ Closed (2026-08-23) — verified already present at `HtmlRenderer.php:161`
 **Priority:** Low
 **Source:** frontend-designer audit (2026-08-22) — 🟡 Print behavior audit
 **Scope:** `writer/src/Renderer/HtmlRenderer.php` head block, potentially `frontend/src/App.vue` global styles
@@ -45,3 +46,13 @@ If we want defence-in-depth, add the same rule to `App.vue`'s `@media print` blo
 ## Notes
 
 - Currently `HtmlRenderer::head()` DOES include `@page { margin: 0 }` at line 161 — [verify]. If confirmed, this ticket becomes doc-only (add a note in `docs/04-pipeline/04-render.md` when that page is written).
+
+## Resolution
+
+Verified 2026-08-23 (part of PR A backlog-sweep). `HtmlRenderer::head()` emits
+`@page { margin: 0 }` inside its `@media print{...}` block at line 161. The
+rule ships with every rendered report; the frontend viewer inherits it via
+the extracted `<style>` blocks. No code change required. Frontend defence-in-depth
+in `App.vue`'s `@media print` block was intentionally skipped — the server-side
+rule is sufficient, and duplicating it in two places creates a drift hazard.
+The `docs/04-pipeline/04-render.md` note stays deferred until that page exists.

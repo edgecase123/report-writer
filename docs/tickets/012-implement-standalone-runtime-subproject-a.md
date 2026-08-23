@@ -2,7 +2,7 @@
 
 **Priority:** Epic — highest-level active initiative
 **Source:** session-design (2026-08-22) — brainstorming output
-**Status:** Blocked on remaining design Sections 5–6, then produces an implementation plan
+**Status:** In progress — A1 + A2 shipped 2026-08-22; A3–A7 remaining
 **Scope:** Whole `writer-app/` directory (new), `frontend/` additions (router + Builder page + CodeMirror + state), `docker-compose.yml`, `docker/`, updates to `writer/` (via [Ticket 010](010-library-rename-to-edgecase.md))
 
 ## Problem
