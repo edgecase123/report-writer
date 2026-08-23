@@ -199,15 +199,6 @@ class ReportBuilderTest extends TestCase
         $this->assertSame('My Sales Report', $text);
     }
 
-    public function testTitleSpansFullColumnWidth(): void
-    {
-        $bands = $this->baseBuilder()->title('T')->build()->getBandInstances();
-        $el    = $bands[0]->getElements()[0];
-
-        // width=0 is the sentinel meaning "use printable page width" (Ticket 017)
-        $this->assertSame(0.0, $el->getWidth());
-    }
-
     public function testTitleElementDeclaresNoWidth(): void
     {
         // Title element should carry the width=0 sentinel so LayoutService
@@ -221,6 +212,24 @@ class ReportBuilderTest extends TestCase
         $this->assertCount(1, $elements);
         $this->assertSame(0.0, $elements[0]->getWidth(),
             'title element must declare width=0 (no coupling to columns extent)');
+    }
+
+    public function testTitleWidthZeroSurvivesEmptyColumns(): void
+    {
+        // The Ticket 017 decoupling means the title band never reads
+        // $this->columns. Building a report with a title and no columns
+        // must still produce a title element with width=0.
+        $bands = ReportBuilder::create('titled_no_cols')
+            ->title('Just a title')
+            ->build()
+            ->getBandInstances();
+
+        $titleBand = $bands[0];
+        $this->assertSame('band_title', $titleBand->getBandInstanceId());
+
+        $elements = $titleBand->getElements();
+        $this->assertCount(1, $elements);
+        $this->assertSame(0.0, $elements[0]->getWidth());
     }
 
     // ── Detail rows ───────────────────────────────────────────────────────────
