@@ -166,9 +166,8 @@ class ReportBuilder
         $bands = [];
 
         if ($this->titleText !== null) {
-            $totalWidth = $this->totalWidth();
             $titleBand  = new BandInstance('band_title', 'title', [
-                new ElementInstance('title', 0.0, 0.0, $totalWidth, $this->titleHeight, new TextContent($this->titleText)),
+                new ElementInstance('title', 0.0, 0.0, 0.0, $this->titleHeight, new TextContent($this->titleText)),
             ]);
             $titleBand = $this->applyBandCallbacks('title', $titleBand, new BandContext([], null, [], []));
             if ($titleBand !== null) {

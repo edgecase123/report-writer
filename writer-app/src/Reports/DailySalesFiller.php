@@ -29,9 +29,9 @@ final class DailySalesFiller implements ReportFillerInterface
         return ReportBuilder::create('daily-sales')
             ->title("Daily Sales — {$date}")
             ->columns([
-                Column::make('order_id',    'Order',       0,   180),
-                Column::make('closed_at',   'Closed',      190, 180),
-                Column::make('total_cents', 'Total',       380, 192)
+                Column::make('order_id',    'Order',       0,   120),
+                Column::make('closed_at',   'Closed',      130, 120),
+                Column::make('total_cents', 'Total',       260, 120)
                     ->sum()
                     ->alignRight()
                     ->format($currency),

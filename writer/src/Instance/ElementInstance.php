@@ -16,6 +16,11 @@ class ElementInstance
     private ElementContent $content;
     private string $textAlign;
 
+    /**
+     * @param float $width Width in points. Pass 0.0 to declare no width; LayoutService
+     *                     will substitute PageConfig::printableWidth() when placing
+     *                     the element. Non-zero widths are used as-is.
+     */
     public function __construct(
         string $instanceId,
         float $x,

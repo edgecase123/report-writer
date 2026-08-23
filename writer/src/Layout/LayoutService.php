@@ -7,6 +7,7 @@ namespace ReportWriter\Layout;
 use ReportWriter\Exceptions\ElementExceedsPageException;
 use ReportWriter\Instance\BandInstance;
 use ReportWriter\Instance\Content\TextContent;
+use ReportWriter\Instance\ElementInstance;
 use ReportWriter\Instance\ReportInstance;
 use ReportWriter\Stream\Page;
 use ReportWriter\Stream\PositionedElement;
@@ -82,6 +83,18 @@ class LayoutService
         return $max;
     }
 
+    /**
+     * Resolves an element's effective width. A sentinel value of 0.0 means
+     * "no declared width" — the abstract-vs-physical boundary between Fill
+     * and Layout. Fill declares intent; Layout substitutes the concrete
+     * printable page width. All PositionedElement instances leaving
+     * LayoutService carry concrete positive widths.
+     */
+    private function resolvedWidth(ElementInstance $el): float
+    {
+        return $el->getWidth() ?: $this->pageConfig->printableWidth();
+    }
+
     private function fits(float $height, float $remaining): bool
     {
         return $height <= $remaining;
@@ -106,7 +119,7 @@ class LayoutService
                 $el->getInstanceId(),
                 $marginLeft + $el->getX(),
                 $cursorY + $el->getY(),
-                $el->getWidth(),
+                $this->resolvedWidth($el),
                 $el->getHeight(),
                 $el->getContent(),
                 $bandType,
@@ -141,7 +154,7 @@ class LayoutService
                 $element->getInstanceId(),
                 $marginLeft + $element->getX(),
                 $cursor + $element->getY(),
-                $element->getWidth(),
+                $this->resolvedWidth($element),
                 $firstHeight,
                 $firstContent,
                 $bandType,
@@ -160,7 +173,7 @@ class LayoutService
             $element->getInstanceId(),
             $marginLeft + $element->getX(),
             $cursor + $element->getY(),
-            $element->getWidth(),
+            $this->resolvedWidth($element),
             $restHeight,
             $restContent,
             $bandType,
