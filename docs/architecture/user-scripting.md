@@ -1,17 +1,26 @@
 ---
-title: User Scripting in Band Hooks and Content Expressions (future direction)
-updated: 2026-08-22
-status: hard future requirement — no implementation, no chosen design
-scope: future major version; explicitly OUT OF SCOPE for Sub-project A (the standalone build)
+title: User Scripting (superseded — see extension-hooks.md)
+updated: 2026-08-23
+status: SUPERSEDED 2026-08-23 — extension happens via host-app hooks and named strategies, not user-authored scripts. Retained for the threat model + rejected-mechanism analysis.
+scope: reference-only; not implemented, not planned
 ---
 
-> **Status.** Hard requirement for a future version, per user direction 2026-08-22. Not designed. Not implemented. Not on the immediate roadmap. This document exists so the requirement doesn't get lost, so the design surface is thought about before code decisions foreclose options, and so anyone reading the security-scanner agent's Rule R5 ("never map JSON → PHP callable") knows the rule is a *current* rule with a planned safe path around it, not a permanent architectural veto.
+> **⚠️ Superseded.** As of 2026-08-23, user-authored scripting is out of scope on both the backend and the frontend. Extension of the pipeline happens via host-app PHP hooks on the builder/filler surface, and JSON templates reference code-registered strategies by name. See [`extension-hooks.md`](extension-hooks.md).
+>
+> This document is retained because the security analysis (trust boundaries, sandbox mechanism trade-offs, Rule R5 discussion) remains valuable reference material. The design surface described below — sandbox runtime, ScriptRuntime abstraction, imports blocks, PHP AST whitelisting, frontend template scripting — is no longer being pursued.
 
 ---
 
 ## The requirement
 
-Allow **executable scripts** — authored in PHP or TypeScript — to be attached to any extension point in the pipeline. Both **backend-authored** and **frontend/template-authored** scripts are in scope (per user direction 2026-08-22). The same sandbox runtime hosts both; what differs is the **capability grant** — the set of objects and functions injected into the sandbox environment.
+Allow **executable scripts** to be attached to any extension point in the pipeline. Both **backend-authored** and **frontend/template-authored** scripts are in scope (per user direction 2026-08-22).
+
+**Runtime shape:**
+
+- **Frontend/template scripts** are JavaScript or TypeScript and execute in a JavaScript engine (browser at page-render time, Node during Vite dev).
+- **Backend scripts** execute via a pluggable `ScriptRuntime` abstraction the host wires in at composition-root time. The abstraction supports two script languages: PHP or JavaScript/TypeScript. The **v1 concrete implementation ships PHP only** — the demo host is PHP, so a PHP-in-PHP sandbox is the lowest-friction starting point. A JavaScript backend runtime (embedded QuickJS, WASM, or Node subprocess — see Design Directions) can be added as a second implementation later without pipeline changes.
+
+What differs across paths is the **capability grant** — the set of objects and functions injected into the sandbox environment, plus where scripts execute (server vs browser).
 
 Backend-authored scripts get the full pipeline API (register data sources, register formatters, install band hooks, transform params before fill). Frontend/template-authored scripts get a **restricted context** — read access to the current report's rows, aggregate rows, params, and registered data sources, plus safe stdlib (math, string manipulation, date parsing, JSON). Neither path grants `fetch()`, filesystem, or process access to script code.
 
@@ -49,7 +58,7 @@ Backend scripts live in the filesystem — inside the host app's codebase, insid
 - `./relative/path` — from the host app's configured scripts base directory. Path resolution is deterministic and validated against the base (no `..` escapes).
 - Bare names (`foo`, `some-hook`) are **not supported** — always explicit, no magic.
 
-The local alias (LHS of the map) is scoped to this report. Two reports can import the same script under different names; a report can import two different scripts under the same alias (though it can't — importing the same alias twice is a template error).
+The local alias (LHS of the map) is scoped to this report. Two reports can import the same script under different aliases, and two reports can independently use the same alias for different scripts. Within a single report, however, each alias must be unique — reusing an alias in the same `imports` block is a template error.
 
 **Trust context.** The author of a report template controls what scripts run for that template — but only from the pool of scripts that exist in the codebase. Adding a new importable script to that pool requires server-level access (dropping a file, installing a package). A hostile template author can only import scripts that are already installed; they can't inject new code.
 
@@ -90,7 +99,14 @@ Template-authored scripts CANNOT:
 
 The capability restriction — **read-only access to the reporting context, no external I/O** — is what makes template scripting shippable alongside the backend path without a hardened per-invocation isolation story. A script that can only see what the report already loaded can't exfiltrate anything the request wasn't already going to expose in the rendered output.
 
-**Language options for both paths:** PHP or TypeScript. The author chooses per script. Both must be equally sandboxable, meaning the sandbox story has to cover both host runtimes.
+**Language options per path:**
+
+- **Frontend/template:** JavaScript or TypeScript. TypeScript is the recommended authoring form (transpiles cleanly to JavaScript, which is what actually executes in the browser or Node). A host-app config setting can restrict input to one — e.g. `scripts.frontend.language = "typescript"` to require types on all template scripts.
+- **Backend:** determined by the concrete `ScriptRuntime` implementation the host wires in. The abstraction accepts either PHP or JavaScript/TypeScript source. **v1 ships one implementation: `PhpScriptRuntime`** — accepts PHP source, executes it in a PHP-in-PHP sandbox (see Direction 2 in Design Directions for the leading candidate mechanism). A future `JsScriptRuntime` would accept JavaScript/TypeScript source and execute it in an embedded JS engine (see Directions 3, 4, or 5). A host is expected to wire exactly one backend runtime; mixing PHP and JavaScript backend scripts within one deployment is not a supported shape.
+
+The sandbox design must cover whichever runtime is wired in, with equal rigor.
+
+The `ScriptRuntime` abstraction exists specifically so PHP-first v1 doesn't foreclose a JS/TS backend option later. Every reference to "the backend script runtime" in library code should go through the interface, never a concrete class name.
 
 ### Extension points that could accept scripts
 
@@ -189,6 +205,14 @@ The bar: an attacker who can author templates can consume server resources on th
 
 ## Design directions (ranked by likely-fit)
 
+**How to read the directions.** These five design candidates apply *per `ScriptRuntime` implementation*, not as mutually exclusive choices for the platform overall:
+
+- **v1 `PhpScriptRuntime` (in scope for v1):** primarily Direction 2 (whitelisted PHP AST subset); Direction 4 (subprocess) and Direction 5 (WASM) are secondary options.
+- **Future `JsScriptRuntime`:** primarily Direction 3 (QuickJS in PHP) or Direction 5 (WASM); Direction 4 (subprocess to Node) is a secondary option.
+- **Direction 1 (expression language)** stands apart — it's a *different requirement shape* (no user scripting; declarative expressions instead). Retained as a fallback if the sandbox cost turns out to exceed value.
+
+Directions 2 and 3 map naturally to specific runtime implementations. Directions 4 and 5 (subprocess, WASM) are runtime-implementation strategies that could apply to either language.
+
 ### Direction 1 — Custom expression language (safest, most restricted)
 
 A small domain-specific language that compiles to a value at fill time. Similar shape to Symfony ExpressionLanguage, JMESPath, or JSONata. The user "script" is not PHP or TypeScript — it's a purpose-built expression grammar with no I/O, no function calls beyond an allowlist, no loops beyond bounded comprehensions.
@@ -277,7 +301,7 @@ Backend-authored scripts slot in as importable modules, resolved per-render:
 
 ### Frontend/template path — restricted-context capability grant
 
-Additive to the backend path. Once the sandbox runtime is proven with backend scripts, template-authored scripts slot in with the same runtime but a restricted capability grant. **Templates use two script sources:**
+Additive to the backend path. Frontend scripts run in a JavaScript engine (browser at page render; Node during Vite dev) — a different host runtime from the v1 `PhpScriptRuntime` on the backend, but a shared sandbox *design*. The core invariants — no I/O primitives, no arbitrary function construction, structured errors, no shared state across invocations — apply identically. What the frontend restricts additionally is the capability grant (read-only reporting context; no data source *registration*, only *access*). **Templates use two script sources:**
 
 - **Inline scripts** embedded in the template body — anonymous, one-off, source lives in the template JSON:
   - New `computed` content type: `{ "type": "computed", "lang": "php" | "ts", "source": "..." }`

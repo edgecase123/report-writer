@@ -2,7 +2,7 @@
 
 **Priority:** Epic — hard future requirement
 **Source:** session-design (2026-08-22) — explicit user requirement
-**Status:** Backlog — no direction chosen among 5 candidates
+**Status:** ❌ Superseded (2026-08-23) — design pivoted from user-authored scripting to host-app hooks + named strategies. See `docs/architecture/extension-hooks.md` and [Ticket 016](016-extension-hooks-lifecycle-plus-immutability-retrofit.md). `docs/architecture/user-scripting.md` retained for threat model + rejected-mechanism reference.
 **Scope:** New sandbox runtime (PHP + TS), extension seams across `writer/src/`, JSON template schema additions, `writer-app/scripts/` directory convention, Registry additions
 
 ## Problem
