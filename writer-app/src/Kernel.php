@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace ReportWriter\App;
 
 use PDO;
+use ReportWriter\App\Config;
 use ReportWriter\App\Database\SqliteConnectionFactory;
 use ReportWriter\App\Http\HealthController;
 use ReportWriter\App\Http\JsonErrorHandler;
@@ -21,9 +22,10 @@ use Slim\Psr7\Factory\ResponseFactory;
 
 final class Kernel
 {
-    public static function buildApp(?Container $container = null): App
+    public static function buildApp(?Container $container = null, ?Config $config = null): App
     {
-        $container = $container ?? self::defaultContainer();
+        $config    = $config ?? Config::fromEnv();
+        $container = $container ?? self::defaultContainer($config);
 
         $app = SlimAppFactory::create();
 
@@ -35,22 +37,21 @@ final class Kernel
             return $container->get(ReportController::class)->show($request, $response, $args);
         });
 
-        $debug = (bool) (getenv('APP_DEBUG') ?: false);
-        $errorMiddleware = $app->addErrorMiddleware($debug, true, true);
-        $errorMiddleware->setDefaultErrorHandler(new JsonErrorHandler(new ResponseFactory(), $debug));
+        $errorMiddleware = $app->addErrorMiddleware($config->appDebug(), true, true);
+        $errorMiddleware->setDefaultErrorHandler(new JsonErrorHandler(new ResponseFactory(), $config->appDebug()));
 
         return $app;
     }
 
-    public static function defaultContainer(): Container
+    public static function defaultContainer(Config $config): Container
     {
         $c = new Container();
 
         $c->set(HealthController::class, static fn () => new HealthController());
 
-        $c->set(PDO::class, static function (): PDO {
-            $path = getenv('SQLITE_PATH') ?: null;
-            if ($path === null || $path === '') {
+        $c->set(PDO::class, static function () use ($config): PDO {
+            $path = $config->sqlitePath();
+            if ($path === null) {
                 throw new RuntimeException('SQLITE_PATH env var must be set for production use.');
             }
             return SqliteConnectionFactory::createFromPath($path);
