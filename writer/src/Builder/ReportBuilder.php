@@ -97,6 +97,9 @@ class ReportBuilder
      *
      * Non-nullable return type: to no-op, return the input unchanged.
      *
+     * SECURITY: code-only API. Never construct $callback from data (JSON/DB/HTTP)
+     * via Closure::fromCallable() or dynamic dispatch — see security-scanner R5.
+     *
      * @param callable(array): array $callback
      */
     public function beforeBuild(callable $callback): self
@@ -113,6 +116,9 @@ class ReportBuilder
      * Immutable-fluent: returns a clone. Callers MUST reassign.
      *
      * Non-nullable return type: to no-op, return the input unchanged.
+     *
+     * SECURITY: code-only API. Never construct $callback from data (JSON/DB/HTTP)
+     * via Closure::fromCallable() or dynamic dispatch — see security-scanner R5.
      *
      * @param callable(ReportInstance): ReportInstance $callback
      */
@@ -136,6 +142,9 @@ class ReportBuilder
      * null the band is suppressed and remaining callbacks are skipped.
      *
      * Immutable-fluent: returns a clone. Callers MUST reassign.
+     *
+     * SECURITY: code-only API. Never construct $callback from data (JSON/DB/HTTP)
+     * via Closure::fromCallable() or dynamic dispatch — see security-scanner R5.
      *
      * @param callable(BandInstance, BandContext): ?BandInstance $callback
      */

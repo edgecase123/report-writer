@@ -52,6 +52,9 @@ class DefinitionFiller implements ReportFillerInterface
      * Immutable-fluent: returns a clone. Callers MUST reassign
      * (`$filler = $filler->onBand(...)`); fire-and-forget silently drops the callback.
      *
+     * SECURITY: code-only API. Never construct $callback from data (JSON/DB/HTTP)
+     * via Closure::fromCallable() or dynamic dispatch — see security-scanner R5.
+     *
      * @param callable(BandInstance, BandContext): ?BandInstance $callback
      */
     public function onBand(string $bandId, callable $callback): self
@@ -71,6 +74,13 @@ class DefinitionFiller implements ReportFillerInterface
      * Non-nullable return type: to no-op, return the input unchanged. Returning
      * null (or forgetting to return) raises TypeError at the next reducer step.
      *
+     * SECURITY: code-only API. Never construct $callback from data (JSON/DB/HTTP)
+     * via Closure::fromCallable() or dynamic dispatch — see security-scanner R5.
+     *
+     * NOTE: beforeFill runs BEFORE validateParams(). Hook authors should not
+     * assume required params are present or well-typed — a hook may itself
+     * install required defaults, but must be defensive on read.
+     *
      * @param callable(array): array $callback
      */
     public function beforeFill(callable $callback): self
@@ -89,6 +99,9 @@ class DefinitionFiller implements ReportFillerInterface
      * registration order — each callback receives the output of the previous.
      *
      * Non-nullable return type: to no-op, return the input unchanged.
+     *
+     * SECURITY: code-only API. Never construct $callback from data (JSON/DB/HTTP)
+     * via Closure::fromCallable() or dynamic dispatch — see security-scanner R5.
      *
      * @param callable(ReportInstance): ReportInstance $callback
      */
