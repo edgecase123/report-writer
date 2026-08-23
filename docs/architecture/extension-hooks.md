@@ -1,7 +1,7 @@
 ---
 title: Extension Hooks and Named Strategies
 updated: 2026-08-23
-status: design decided; concrete hook list is a candidate proposal
+status: design decided; hook API locked (Ticket 016 tracks implementation)
 supersedes: user-scripting.md
 ---
 
@@ -22,26 +22,71 @@ There is no separate frontend scripting layer. Interactivity in the viewer app (
 - Snapshot tests stay deterministic because everything is code-driven
 - Print output remains byte-identical to screen because no JS mutates the DOM after render
 
-## Backend hooks — candidate lifecycle points
+## Backend hooks — locked API
 
-Existing today:
+Concrete implementation tracked as [Ticket 016](../tickets/016-extension-hooks-lifecycle-plus-immutability-retrofit.md).
 
-- `DefinitionFiller::onBand(string $bandId, callable $cb): void` — post-band-build hook. Return `null` to suppress the band, or return a (possibly modified) `BandInstance` to override. Multiple callbacks per band chain in registration order.
+### Convention: immutable-fluent
 
-Candidates to add (final API TBD; each proposed as a method on the builder / filler surface):
+All hook-registration methods on both `ReportBuilder` and `DefinitionFiller` follow the immutable-fluent convention:
 
-| Hook | Receives | Returns | Fires |
+- Signature returns `: self`
+- Implementation clones `$this` before mutating any state
+- Returns the clone
+
+Callers MUST reassign: `$filler = $filler->onBand('detail', $cb)`. Fire-and-forget `$filler->onBand(...)` silently drops the callback because the mutation happens on a discarded clone.
+
+Consistency rationale: `ReportBuilder` has always been immutable-fluent (`title()`, `columns()`, `rows()`, etc. all clone-and-return). `DefinitionFiller::onBand` was refactored to `: void` in A1 ([Ticket 006](../tickets/006-definitionfiller-onband-immutability.md)) as a hasty fix for the "claims fluent, actually mutates" bug. The right long-term fix — codified here and tracked by [Ticket 016](../tickets/016-extension-hooks-lifecycle-plus-immutability-retrofit.md) — is to make it truly immutable so `: self` becomes honest again.
+
+### ReportBuilder
+
+| Hook | Signature | Fires | Semantics |
 |---|---|---|---|
-| `beforeFill(callable)` | `array $params` | `array` (mutated params) | before the data-source query, once per fill |
-| `afterFill(callable)` | `ReportInstance` | `ReportInstance` (mutated) | after all bands built, before returning from `fill()` |
-| `beforeLayout(callable)` | `ReportInstance` | `ReportInstance` | before `LayoutService::layout()` |
-| `afterLayout(callable)` | `ReportStream` | `ReportStream` | after `LayoutService::layout()`, before rendering |
-| `beforeRender(callable)` | `ReportStream` | `ReportStream` | before renderer runs |
-| `afterRender(callable)` | `string $output` | `string` (mutated) | after renderer produces output |
+| `beforeBuild` | `beforeBuild(callable(array $rows): array): self` | Before `build()` constructs bands from rows | Chain: each callback receives previous output |
+| `afterBuild` | `afterBuild(callable(ReportInstance): ReportInstance): self` | Before `build()` returns | Chain: each callback receives previous output |
+| `onBand` | `onBand(string $bandId, callable(BandInstance, BandContext): ?BandInstance): self` | After each band is built | Chain; `return null` suppresses the band |
 
-Per-band hooks (`onBand`-style) stay filler-scoped because they need band-lifecycle context. The lifecycle hooks above live on the builder (per-report) and on the filler (per fill invocation) — same shape either way, both hand back mutated versions of what they were passed.
+### DefinitionFiller
 
-Hook chaining: multiple callables per hook, invoked in registration order; each receives the output of the previous. Matches `DefinitionFiller::onBand`'s existing behavior.
+| Hook | Signature | Fires | Semantics |
+|---|---|---|---|
+| `beforeFill` | `beforeFill(callable(array $params): array): self` | Before data source is queried | Chain: each callback receives previous output |
+| `afterFill` | `afterFill(callable(ReportInstance): ReportInstance): self` | Before `fill()` returns | Chain: each callback receives previous output |
+| `onBand` | `onBand(string $bandId, callable(BandInstance, BandContext): ?BandInstance): self` | After each band is built (existing today; retrofit to true immutability per Ticket 016) | Chain; `return null` suppresses the band |
+
+### Reducer
+
+Multi-callback chaining uses `array_reduce`:
+
+```php
+$params = array_reduce(
+    $this->beforeFillCallbacks,
+    fn ($acc, $cb) => $cb($acc),
+    $params
+);
+```
+
+### Return-type strictness
+
+Lifecycle hook signatures declare non-nullable return types (`: array`, `: ReportInstance`). If a callback wants to no-op, it returns the input unchanged (`return $params`). A callback that forgets its `return` — or explicitly returns `null` — raises `TypeError` immediately. Loud failure preferred over silent no-op.
+
+The only hook that legitimately returns `null` is `onBand` (both classes), where `null` is a load-bearing signal meaning "suppress this band". Reserving `null` semantics to `onBand` keeps its meaning unambiguous across the API surface.
+
+### Error propagation
+
+Callbacks that throw propagate up through `build()` / `fill()`. No try/catch in the reducer — host-code bugs should surface as exceptions, not silent swallows.
+
+### What's deliberately NOT on ReportBuilder / DefinitionFiller
+
+- `beforeLayout` / `afterLayout` — belong on `LayoutService`, not the fillers. Per the Fill/Layout separation invariant (see `CLAUDE.md`), fillers must never learn about layout math. Adding layout hooks to fillers would breach that seam.
+- `beforeRender` / `afterRender` — belong on `HtmlRenderer` / `JsonRenderer`, not the fillers. Same seam concern.
+- Both remain unimplemented until the "same pre-layout transform across N reports" pattern actually shows up in a real consumer. YAGNI.
+
+### Extension for custom fillers
+
+A custom class implementing `ReportFillerInterface` directly (not extending `ReportBuilder` or `DefinitionFiller`) doesn't get free hooks. It owns its own lifecycle. If it wants hooks, it implements the same pattern — clone-and-return registration methods, `array_reduce`-driven invocation.
+
+If a `HooksTrait` becomes worth extracting because two or more custom fillers reimplement the same shape, extract then. Not before.
 
 ## Named strategies from JSON templates
 
