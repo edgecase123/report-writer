@@ -163,4 +163,54 @@ class LayoutServiceTest extends TestCase
         $stream = $service->layout($report);
         $this->assertCount(2, $stream->getPages());
     }
+
+    public function testWidthZeroElementResolvesToPrintableWidth(): void
+    {
+        // PageConfig: width=612, marginLeft=20, marginRight=20 → printableWidth=572
+        $service = new LayoutService(
+            new Flattener(),
+            new PageConfig(612.0, 792.0, 20.0, 20.0, 20.0, 20.0)
+        );
+
+        $el     = new ElementInstance('sentinel', 0.0, 0.0, 0.0, 20.0, new TextContent('X'));
+        $report = new ReportInstance('r1', [new BandInstance('b1', 'title', [$el])]);
+
+        $positioned = $service->layout($report)->getPages()[0]->getElements()[0];
+
+        $this->assertSame(572.0, $positioned->getWidth());
+    }
+
+    public function testNonZeroWidthPassesThroughUnchanged(): void
+    {
+        $service = new LayoutService(
+            new Flattener(),
+            new PageConfig(612.0, 792.0, 20.0, 20.0, 20.0, 20.0)
+        );
+
+        $el     = new ElementInstance('fixed', 0.0, 0.0, 300.0, 20.0, new TextContent('X'));
+        $report = new ReportInstance('r1', [new BandInstance('b1', 'detail', [$el])]);
+
+        $positioned = $service->layout($report)->getPages()[0]->getElements()[0];
+
+        $this->assertSame(300.0, $positioned->getWidth());
+    }
+
+    public function testSplittableWidthZeroResolvesOnBothChunks(): void
+    {
+        // Page usable = 30; text has lineHeight=10 so 3 lines fit per page.
+        // Content is 4 lines → split: 3 on p1, 1 on p2. Both chunks must get resolved width.
+        $service = new LayoutService(
+            new Flattener(),
+            new PageConfig(612.0, 30.0, 0.0, 0.0, 20.0, 20.0)  // printableWidth=572
+        );
+        $content = new TextContent("L1\nL2\nL3\nL4", 10.0);
+        $el      = new ElementInstance('el1', 0.0, 0.0, 0.0, 40.0, $content);
+
+        $stream = $service->layout(new ReportInstance('r1', [new BandInstance('b1', 'detail', [$el])]));
+        $pages  = $stream->getPages();
+
+        $this->assertCount(2, $pages);
+        $this->assertSame(572.0, $pages[0]->getElements()[0]->getWidth(), 'first-chunk width must be resolved');
+        $this->assertSame(572.0, $pages[1]->getElements()[0]->getWidth(), 'continuation-chunk width must be resolved');
+    }
 }
