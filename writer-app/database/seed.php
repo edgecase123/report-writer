@@ -37,6 +37,7 @@ final class Seed
             self::insertItems($pdo);
             self::insertStaff($pdo);
             self::insertOrdersAndItems($pdo);
+            self::insertPayments($pdo);
             $pdo->commit();
         } catch (\Throwable $e) {
             $pdo->rollBack();
@@ -146,6 +147,40 @@ final class Seed
                 }
                 $orderId++;
             }
+        }
+    }
+
+    private static function insertPayments(PDO $pdo): void
+    {
+        $rows = $pdo->query(
+            "SELECT o.id AS order_id, o.closed_at,
+                    COALESCE(SUM(oi.quantity * oi.unit_price_cents), 0) AS total_cents
+               FROM orders o
+          LEFT JOIN order_items oi ON oi.order_id = o.id
+              WHERE o.closed_at IS NOT NULL
+           GROUP BY o.id
+           ORDER BY o.id"
+        )->fetchAll(\PDO::FETCH_ASSOC);
+
+        $paymentStmt = $pdo->prepare(
+            'INSERT INTO payments (order_id, method, amount_cents, taken_at, staff_id)
+             VALUES (:oid, :method, :amount, :taken, :staff)'
+        );
+
+        $baristaIds = [1, 2, 3, 4];
+        $ordinal    = 0;
+        foreach ($rows as $r) {
+            $roll   = mt_rand(1, 100);
+            $method = $roll <= 55 ? 'card' : ($roll <= 85 ? 'cash' : 'mobile');
+            $staff  = $baristaIds[$ordinal % 4];
+            $paymentStmt->execute([
+                'oid'    => (int) $r['order_id'],
+                'method' => $method,
+                'amount' => (int) $r['total_cents'],
+                'taken'  => (string) $r['closed_at'],
+                'staff'  => $staff,
+            ]);
+            $ordinal++;
         }
     }
 
