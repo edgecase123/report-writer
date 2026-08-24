@@ -388,10 +388,10 @@ Committing to write this recipe as a proper doc lives in `docs/handoff/twig-to-r
 - **A `PageConfig` or physical-layout concern in the data-source layer.** These live in Layout, unrelated to data-source shape.
 - **A JSON-template schema change for inline SQL.** Explicitly rejected earlier in the design conversation — templates continue to reference registered atoms by name.
 
-## Open items requiring Lee's answers before final approval
+## Open items
 
-1. **PHP minimum version — 7.4 or bump to 8.0?** Library `composer.json` currently declares `"php": ">=7.4"`. PHP 7.4 reached EOL in November 2022; most realistic consumers are on 8.x already. Bumping unlocks: named-args at call sites (small AI-readability win), constructor property promotion (less boilerplate in the many value-objects this spec adds), readonly properties (immutability on `ParamSpec` / `ColumnSpec`), enum types (bounded `ColumnSpec` types could become a native enum instead of factory methods). Staying on 7.4 keeps a marginally wider consumer envelope. Recommendation: **bump to 8.0.** No spec text changes either way — code examples in this spec are already 7.4-compatible (positional args) — but the decision shapes the design principle *"prefer named args at ctor sites for AI-readability"* (adopt if 8.0, drop if 7.4).
+*All resolved. Spec is ready for merge.*
 
-*Previously open, now resolved:*
 - ~~Doctrine adapter placement~~ → **in `writer/`** (see Framework adapter roadmap).
 - ~~Twig migration path~~ → **cutover** (see Twig → ReportBuilder migration recipe).
+- ~~PHP minimum version~~ → **stays at 7.4** (Lee's work stack). Consequence: no PHP 8 features (named-args, constructor property promotion, readonly, enum types). Code examples in this spec are 7.4-compatible; the *"prefer named-args at ctor sites for AI-readability"* discipline is **dropped** — AI-friendliness comes from small interfaces + descriptive positional-arg names + `paramSpecs()`/`columnSpec()` introspection instead.
