@@ -21,7 +21,7 @@ At four reports we already saw the DRY violation surface (PR #28). At six+ (A3 c
 
 1. **Dev-authored reports.** Fluent `ReportBuilder` API is the deliverable. Framework-on-rails for the "controller-method + freehand SQL + Twig" pattern the team runs today.
 2. **Reusable component library.** Registered data-source atoms + composition primitives that the fluent API consumes. Dev writing "sales by staff" does not re-author staff-lookup or the join.
-3. **AI report-authorship (months out).** API-shape decisions keep AI usability as a check, but AI-specific features (introspection API, safety infra) ship when the AI bridge lands, not now.
+3. **AI report-authorship (months out).** Deployment locus is flexible — the AI system is a separate app but can run inside the main application (embedded or standalone). API-shape decisions keep AI usability as a check, but AI-specific features (introspection API, safety infra) ship when the AI bridge lands, not now.
 4. **UI builder (future).** Not gating. Designed around what the AI/dev API already supports.
 
 ## Design principles
@@ -259,11 +259,11 @@ Preserves the existing "fetch once per source per fill()" invariant even when th
 | Adapter | Package | Status |
 |---|---|---|
 | `PdoExecutor` | `writer/` | Ships in the spike PR |
-| `DoctrineDbalExecutor` | `writer/` (or `report-writer-doctrine`) | Near-term follow-up — first real-consumer adapter for Lee's stack |
+| `DoctrineDbalExecutor` | `writer/` (decided in-repo) | Near-term follow-up — first real-consumer adapter for Lee's stack |
 | `EloquentExecutor` | `report-writer-laravel` (companion) | On demand |
 | Test-only executors (in-memory, audit-recording, spy) | consumer-provided | Trivial to author |
 
-**Companion-package-vs-in-repo decision** for Doctrine deferred pending Lee's answer; both work. Companion is more disciplined per ADR-013; in-repo is faster to iterate.
+**Doctrine placement decided:** in-repo (writer/). Faster iteration for the primary near-term consumer; the ADR-013 spirit is preserved by keeping the executor a thin adapter (~30 LOC) with no framework code in the surrounding library. Doctrine DBAL becomes an optional `require-dev` for tests and a suggests-hint in `composer.json` for consumers who wire it up. If a Laravel consumer ever arrives, `EloquentExecutor` still ships as a separate `report-writer-laravel` companion (Eloquent's transitive deps are heavier and merit isolation).
 
 ## Backwards compatibility + retrofit plan
 
@@ -291,6 +291,7 @@ Preserves the existing "fetch once per source per fill()" invariant even when th
 - `writer-app/src/Reports/DailySalesFiller.php` (retrofit to use `->dataSource(new DailySalesDataSource(...))`)
 - `writer-app/src/Reports/DataSource/SqliteDailySalesProvider.php` → renamed and reshaped to `DailySalesDataSource extends NamedSqlDataSource`
 - Tests: unit tests for `PdoExecutor`, `NamedSqlDataSource` (including coercion + yielding); `DailySalesFiller` snapshot unchanged
+- `CHANGELOG.md` entry — first writer/ change since A2; semver **MINOR** bump (additive interfaces + one widened return type on a public interface; backwards-compat for consumers who call `fetchRows()`, mildly breaking only for external classes that *implement* `ReportDataSourceInterface`)
 - Reviewer dispatch (`dry-solid-reviewer` + `security-scanner`) as project canon (agents in `.claude/agents/`)
 
 **PR 2 — `EnrichedDataSource` composite.** ~1 new file + 1 test suite. Adds the first composition primitive. Includes ctor-time validation of `on`/`select` against child `columnSpec`.
@@ -299,7 +300,7 @@ Preserves the existing "fetch once per source per fill()" invariant even when th
 
 **PR 4 — Atom parameterisation ADR.** Doc-only. Formalises the discipline as `docs/09-conventions/decisions/014-atom-parameterisation.md`.
 
-**PR 5 — A3.5 (Register Close) pivoted to ReportBuilder-based.** Three atoms (`orders-closed-on-date`, `payments-by-date`, `staff-lookup`) + one `RegisterCloseFiller` (ReportBuilder-based). Follows A3.4's shape; consumes the new SqlDataSource + composition APIs.
+**PR 5 — A3.5 (Register Close) pivoted to ReportBuilder-based.** Three atoms (`orders-closed-on-date`, `payments-by-date`, `staff-lookup`) + one `RegisterCloseFiller` (ReportBuilder-based). Follows A3.4's shape; consumes the new SqlDataSource + composition APIs. *(Note: rw2's earlier paused A3.5 draft assumed the JSON-templated pattern; this pivot supersedes it — discard-and-restart, not adapt.)*
 
 **PR 6 — A3.6 (Full Menu Book) pivoted to ReportBuilder-based.** Kitchen-sink report; exercises subreports + splittable text + ComputedExpression + onBand hook + new SqlDataSource + at least one composition primitive if `LeftAntiJoinDataSource` has landed.
 
@@ -374,6 +375,8 @@ public function dailySalesReport(Request $req, DoctrineDbalExecutor $exec, Layou
 
 Same responsibilities (query + template), different substrate. The gain: fluent template becomes typed + composable + snapshot-testable; `staff-lookup` and other atoms become reusable across reports; AI can author both sides once the bridge lands.
 
+**Migration path decided: cutover** — Lee's team's existing reports get rewritten against `ReportBuilder`; no Twig-compat bridge (a `TwigRenderer` alongside `HtmlRenderer` was considered and rejected). Rationale: the reports need rewriting to gain the framework's benefits anyway (composable atoms, snapshot tests, AI-authorship-ready), so a bridge would just delay the migration for no durable payoff.
+
 Committing to write this recipe as a proper doc lives in `docs/handoff/twig-to-reportbuilder-migration.md` post-A3.
 
 ## Non-goals
@@ -387,7 +390,8 @@ Committing to write this recipe as a proper doc lives in `docs/handoff/twig-to-r
 
 ## Open items requiring Lee's answers before final approval
 
-1. **Doctrine adapter placement:** ship `DoctrineDbalExecutor` in `writer/` (in-repo, faster iteration) or `report-writer-doctrine` (companion package, disciplined per ADR-013)?
-2. **Twig migration path:** does Lee's team plan a cutover (framework replaces Twig) or do we need a Twig-compat bridge (a `TwigRenderer` alongside `HtmlRenderer` that consumes a `ReportStream`)?
+1. **PHP minimum version — 7.4 or bump to 8.0?** Library `composer.json` currently declares `"php": ">=7.4"`. PHP 7.4 reached EOL in November 2022; most realistic consumers are on 8.x already. Bumping unlocks: named-args at call sites (small AI-readability win), constructor property promotion (less boilerplate in the many value-objects this spec adds), readonly properties (immutability on `ParamSpec` / `ColumnSpec`), enum types (bounded `ColumnSpec` types could become a native enum instead of factory methods). Staying on 7.4 keeps a marginally wider consumer envelope. Recommendation: **bump to 8.0.** No spec text changes either way — code examples in this spec are already 7.4-compatible (positional args) — but the decision shapes the design principle *"prefer named args at ctor sites for AI-readability"* (adopt if 8.0, drop if 7.4).
 
-Neither is spike-blocking; both shape follow-up sequencing.
+*Previously open, now resolved:*
+- ~~Doctrine adapter placement~~ → **in `writer/`** (see Framework adapter roadmap).
+- ~~Twig migration path~~ → **cutover** (see Twig → ReportBuilder migration recipe).
