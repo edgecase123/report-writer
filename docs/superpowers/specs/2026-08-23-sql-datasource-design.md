@@ -27,6 +27,11 @@ At four reports we already saw the DRY violation surface (PR #28). At six+ (A3 c
 ## Design principles
 
 - **The `ReportBuilder` fluent API is the source of truth for what a report is.** Every other consumer (JSON template, AI, UI builder) is a projection of the same call graph.
+- **Two on-ramps for row supply, both first-class.**
+  - **`->rows(iterable)`** — the dev has already fetched rows (Doctrine DBAL, PDO, Eloquent, an array, anything iterable) and hands them straight to the builder. Zero framework ceremony; the dev's normal query idiom is preserved.
+  - **`->dataSource(SqlDataSource)`** — opt-in path for queries that gain reuse or need machine introspection (UI/AI). Trades a small registration cost for automatic `ParamSpec` validation, `ColumnSpec` coercion, and `paramSpecs()`/`columnSpec()` visibility.
+
+  The dev writing a one-off report never has to encounter `SqlDataSource`, `NamedSqlDataSource`, `SqlExecutor`, or the registry. Promotion from fast path to registered atom is a refactor the dev owns.
 - **Data-source composition happens in code, not in JSON templates.** SQL is dev-authored; the JSON template's `data_source` field references named registered atoms (never contains inline SQL).
 - **Atoms are parameterised over a *family* of reports, not a single one** — see § *Atom parameterisation discipline* below.
 - **Machine-introspectable-by-design.** Every atom declares its params and column shape. AI enablement is a free consequence of good design, not a feature bolt-on.
@@ -63,7 +68,7 @@ interface SqlExecutor
 
 ### Interface: `SqlDataSource`
 
-A narrower specialization of `ReportDataSourceInterface` that adds SQL-level introspection — the property the AI (and eventual UI builder) needs.
+A narrower specialization of `ReportDataSourceInterface` that adds SQL-level introspection — the property the AI, the eventual UI builder, and cross-report reuse all need. **Opt-in**: the dev promotes a query to a `SqlDataSource` when it earns registration (see § *When to promote a query to a registered atom*). One-off queries stay on the `->rows(iterable)` fast path.
 
 ```php
 namespace ReportWriter\Interfaces;
@@ -86,7 +91,7 @@ interface SqlDataSource extends ReportDataSourceInterface
 
 ### Value-object: `NamedSqlDataSource`
 
-The general-purpose implementation of `SqlDataSource` — the "one class covers most SQL reports" ergonomics.
+The general-purpose implementation of `SqlDataSource` — one class covers registered SQL atoms when the promotion criteria are met. For one-off queries, prefer `->rows(iterable)` and skip this entirely.
 
 ```php
 namespace ReportWriter\DataSource;
@@ -194,22 +199,43 @@ final class EnrichedDataSource implements ReportDataSourceInterface
 - `PeriodOverPeriodDataSource(atom, windowA, windowB, on)` — same atom, two param sets, merged on key. Unlocks period-over-period, YoY, cumulative-to-date, cohort retention.
 - `LeftAntiJoinDataSource(primary, exclusion, on)` — negative existence. Unlocks "never-ordered items," "churned customers," "unmapped inventory."
 
-### Fluent API: `ReportBuilder::dataSource()`
+### When to promote a query to a registered atom
 
-New fluent method on the code-first builder.
+Devs default to the `->rows(iterable)` fast path. Promote a query to a registered `SqlDataSource` (typically a `NamedSqlDataSource` in the DI container) when *any* of these hold:
+
+1. **The same query is used by ≥2 reports.** Composition primitives (`EnrichedDataSource`, future `PeriodOverPeriod`, `LeftAntiJoin`) operate on registered atoms — promoting unlocks composition. `staff-lookup` is a classic case: joined into orders, order-items, timesheets, etc.
+2. **UI or AI needs to enumerate the query as a discoverable data source.** Registered atoms show up in `Registry::describe()` (deferred); one-off `->rows()` queries do not.
+3. **You want `ColumnSpec`-driven type coercion and `ParamSpec` validation instead of writing them by hand in the controller.** Zero-overhead once the atom exists.
+
+If none apply, keep the query inline in the controller and use `->rows(iterable)`. Promotion is a mechanical refactor: extract the SQL + param spec + column spec into a `NamedSqlDataSource` in your DI container, replace `->rows($result)` with `->dataSource($registered)`.
+
+### Fluent API: `ReportBuilder::rows()` and `ReportBuilder::dataSource()`
+
+The builder accepts row supply through **two fluent methods**, one per on-ramp:
 
 ```php
 namespace ReportWriter\Builder;
 
 class ReportBuilder
 {
+    /**
+     * Fast path — accepts anything the dev has already fetched.
+     * Signature widened from `array $rows` to `iterable $rows` (arrays pass through unchanged;
+     * Doctrine DBAL Result / PDO fetch generator / Eloquent Collection / plain array all work).
+     * No ParamSpec validation, no ColumnSpec coercion — rows go straight into the fill pipeline.
+     */
+    public function rows(iterable $rows): self;
+
+    /**
+     * Registered path — introspectable atom with automatic param validation + column coercion.
+     * Accepts SqlDataSource, EnrichedDataSource (composite), or any ReportDataSourceInterface.
+     * Params flow to the source at build() time.
+     */
     public function dataSource(ReportDataSourceInterface $source): self;
-    // Replaces the current ad-hoc `->rows([...])` pattern for SQL-backed reports.
-    // Accepts anything that produces rows — SqlDataSource, EnrichedDataSource, or a bespoke class.
 }
 ```
 
-Existing `->rows(array)` stays for hard-coded row sets (tests, tiny fixtures).
+Callers pick one; both are exclusive per report. `->rows()` is the mental default for controller-method-style reports; `->dataSource()` is the opt-in for reusable atoms.
 
 ## Iterable + yielding contract
 
@@ -218,6 +244,7 @@ Every seam in the row-flow returns `iterable<int, array<string, scalar|null>>`:
 - `SqlExecutor::fetchAll(): iterable` — accepts arrays OR generators from implementations.
 - `SqlDataSource::fetchRows(): iterable`
 - `ReportDataSourceInterface::fetchRows(): iterable` — **widened from `: array`, breaking change**
+- `ReportBuilder::rows(iterable): self` — signature accepts `iterable` (was `array`). Arrays still pass through unchanged; generators, DBAL `Result`, PDO iterables all accepted.
 
 **Existing `Sqlite*Provider` classes:** return-type widened to `iterable` as part of the retrofit; internal behaviour unchanged (they can keep returning arrays until they're converted to `NamedSqlDataSource` instances). Snapshot tests unaffected — `foreach` iterates arrays and generators identically.
 
@@ -286,7 +313,7 @@ Preserves the existing "fetch once per source per fill()" invariant even when th
 - `writer/src/DataSource/NamedSqlDataSource.php` (new)
 - `writer/src/Interfaces/ReportDataSourceInterface.php` (return-type widen to `iterable`)
 - `writer/src/Fill/DefinitionFiller.php` (one-line materialise-on-cache)
-- `writer/src/Builder/ReportBuilder.php` (add `->dataSource()`)
+- `writer/src/Builder/ReportBuilder.php` — widen `rows()` signature from `array` to `iterable` (fast-path on-ramp), and add `->dataSource()` (registered-atom on-ramp). Both exclusive per report.
 - `writer-app/src/Kernel.php` (wire `PdoExecutor` around existing PDO service)
 - `writer-app/src/Reports/DailySalesFiller.php` (retrofit to use `->dataSource(new DailySalesDataSource(...))`)
 - `writer-app/src/Reports/DataSource/SqliteDailySalesProvider.php` → renamed and reshaped to `DailySalesDataSource extends NamedSqlDataSource`
@@ -353,7 +380,30 @@ public function dailySalesReport(Request $req, Connection $db, Environment $twig
 }
 ```
 
-**After:**
+**After — Phase 1 (fast path, minimal change):**
+```php
+public function dailySalesReport(Request $req, Connection $db, LayoutService $layout, HtmlRenderer $renderer): Response
+{
+    $rows = $db->executeQuery(
+        'SELECT ... FROM orders o JOIN order_items ... WHERE date(o.closed_at) = :date',
+        ['date' => $req->query->get('date')]
+    )->iterateAssociative();   // returns iterable — streams row-by-row
+
+    $report = ReportBuilder::create('daily-sales')
+        ->title('Daily Sales — ' . $req->query->get('date'))
+        ->columns([ /* … */ ])
+        ->rows($rows)             // ← same iterable the dev already has
+        ->build();
+
+    $stream = $layout->layout($report);
+    return new Response($renderer->render($stream));
+}
+```
+Same DBAL idiom as before; same query, same params. The Twig template is replaced by a fluent column declaration. **This is the migration for the vast majority of one-off reports** — no new registration, no DI wiring, no new concepts.
+
+**After — Phase 2 (promotion to registered atom, if the query earns it):**
+When the same query is needed by a second report, or the UI/AI needs to discover it, promote the SQL into a `NamedSqlDataSource` in the DI container and swap `->rows($result)` for `->dataSource($registered)`:
+
 ```php
 public function dailySalesReport(Request $req, DoctrineDbalExecutor $exec, LayoutService $layout, HtmlRenderer $renderer): Response
 {
@@ -373,7 +423,7 @@ public function dailySalesReport(Request $req, DoctrineDbalExecutor $exec, Layou
 }
 ```
 
-Same responsibilities (query + template), different substrate. The gain: fluent template becomes typed + composable + snapshot-testable; `staff-lookup` and other atoms become reusable across reports; AI can author both sides once the bridge lands.
+Same responsibilities (query + template), different substrate. The gain: fluent template becomes typed + composable + snapshot-testable; `staff-lookup` and other atoms become reusable across reports; AI can author both sides once the bridge lands. See § *When to promote a query to a registered atom* for the criteria.
 
 **Migration path decided: cutover** — Lee's team's existing reports get rewritten against `ReportBuilder`; no Twig-compat bridge (a `TwigRenderer` alongside `HtmlRenderer` was considered and rejected). Rationale: the reports need rewriting to gain the framework's benefits anyway (composable atoms, snapshot tests, AI-authorship-ready), so a bridge would just delay the migration for no durable payoff.
 
